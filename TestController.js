@@ -5,10 +5,8 @@
             var dialog;
             var dialogScope;
             this.name = "test";
-            this.enableTabs = false;
-
             this.find = function () {
-                this.enableTabs = true;
+                console.log(this.searchTab);
             };
             this.save = function () {
                 var errorsHandler = errorService.getErrorsHandler($scope);

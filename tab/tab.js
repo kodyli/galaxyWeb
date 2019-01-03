@@ -153,33 +153,18 @@
                     tEle.css({
                         display: "block"
                     });
-                    return {
-                        pre: function (scope, iEle, iAttr) {
-                            if (iAttr.hasOwnProperty("enable")) {
-                                iAttr.$set("enable", !!newValue);
-                            }
-                            if (iAttr.hasOwnProperty("disableSiblings")) {
-                                iAttr.$set("disableSiblings", !!newValue);
-                            }
-                            if (iAttr.hasOwnProperty("saveWarning")) {
-                                iAttr.$set("saveWarning", !!newValue);
-                            }
-                        },
-                        post: function (scope, iEle, iAttr, ctrls) {
-                            var gwTabCtrl = ctrls[0],
-                                gwTabsCtrl = ctrls[1];
-                            gwTabCtrl.hasSaveWarning = iAttr.saveWarning;
-                            gwTabCtrl.disabled = !iAttr.enable;
-                            if (iAttr.hasOwnProperty("disableSiblings")) {
-                                iAttr.$observe("disableSiblings", function (newValue) {
-                                    gwTabCtrl.disableSiblings(newValue);
-                                });
-                                gwTabCtrl.disabled = false;
-                            }
-                            scope.tabInstance = gwTabCtrl;
-                            gwTabsCtrl.attach(gwTabCtrl);
+                    return function (scope, iEle, iAttr, ctrls) {
+                        var gwTabCtrl = ctrls[0],
+                            gwTabsCtrl = ctrls[1];
+                        gwTabCtrl.hasSaveWarning = iAttr.saveWarning;
+                        gwTabCtrl.disabled = !iAttr.enable;
+                        if (iAttr.hasOwnProperty("disableSiblings")) {
+
+                            gwTabCtrl.disabled = false;
                         }
-                    };
+                        scope.tabInstance = gwTabCtrl;
+                        gwTabsCtrl.attach(gwTabCtrl);
+                    }
                 }
             };
         });

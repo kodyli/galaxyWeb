@@ -59,7 +59,7 @@
 	}]).constant("screenHtml", [
             "<div ng-controller='TestController as ctrl'>",
                 "<gw-tabs id='screenTabs'>",
-                    "<gw-tab tab-id='searchTab' tab-title='Search' save-warning disable-siblings='{{ctrl.enableTabs}}'>",
+                    "<gw-tab tab-id='searchTab' tab-title='Search' save-warning disable-siblings tab-instance='ctrl.searchTab'>",
                         "<input type='text' ng-model='ctrl.name'>",
                         "<button ng-click='ctrl.find()'>Find</button>",
                     "</gw-tab>",
