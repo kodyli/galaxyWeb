@@ -1,6 +1,29 @@
 (function (angular) {
     angular.module("gw.grid", [])
-        .directive("gwGrid", function () {
+        .factory("gwGridService", function () {
+            /**
+             * Designed as an Adapter.
+             * Import functions from jqGrid, must be stateless.
+             */
+            return {
+                addRowToBottom: addRowToBottom,
+                selectRowById: selectRowById,
+                getRowIds: getRowIds
+            };
+
+            function addRowToBottom(gridEle, rowId, rowData) {
+                return gridEle.addRowData(rowId, rowData, "last");
+            }
+
+            function selectRowById(gridEle, rowId) {
+                gridEle.setSelection(rowId);
+            }
+
+            function getRowIds(gridEle) {
+                return gridEle.getDataIDs();
+            }
+        })
+        .directive("gwGrid", ["gwGridService", function (gwGridService) {
             function GwGridController() {
                 this._grid = null;
             }
@@ -13,14 +36,14 @@
                 },
                 addRow: function (rowData) {
                     var rowId = this._getLastRowId() + 1;
-                    var result = this._grid.addRowData(rowId, rowData, "last");
+                    var result = gwGridService.addRowToBottom(this._grid, rowId, rowData);
                     if (result) {
-                        this._grid.setSelection(rowId);
+                        gwGridService.selectRowById(this._grid, rowId);
                     }
                     return result;
                 },
                 _getLastRowId: function () {
-                    var rowIds = this._grid.getDataIDs();
+                    var rowIds = gwGridService.getRowIds(this._grid);
                     if (rowIds.length > 0) {
                         var max = rowIds.reduce(function (a, b) {
                             return Math.max(parseInt(a), parseInt(b));
@@ -30,6 +53,8 @@
                     return 0;
                 }
             });
+
+            GwGridController.$injector = ["gwGridService"];
 
             return {
                 restrict: "E",
@@ -96,7 +121,7 @@
                     };
                 }
             };
-        });
+        }]);
 
 
 })(window.angular);

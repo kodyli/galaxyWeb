@@ -1,17 +1,39 @@
 (function (angular) {
     angular.module("gw.layout", [])
-        .controller("gwLayoutController", ["$element", function ($element) {
-            this.closeRightPanel = function () {
-                this.layout.close("east");
+        .factory("gwLayoutService", function () {
+            return {
+                closeErrorPanel: closeErrorPanel,
+                openErrorPanel: openErrorPanel
             };
-            this.openRightPanel = function () {
-                this.layout.open("east");
-            };
-        }])
-        .directive("gwLayout", function () {
+
+            function closeErrorPanel(layoutEle) {
+                layoutEle.close("east");
+            }
+
+            function openErrorPanel(layoutEle) {
+                layoutEle.open("east");
+            }
+        })
+        .directive("gwLayout", ["gwLayoutService", function (gwLayoutService) {
+            function GwLayoutController() {
+                this._layout = null;
+            }
+            angular.extend(GwLayoutController.prototype, {
+                setLayout: function (layoutEle) {
+                    this._layout = layoutEle;
+                },
+                closeErrorPanel: function () {
+                    gwLayoutService.closeErrorPanel(this._layout);
+                },
+                openErrorPanel: function () {
+                    gwLayoutService.openErrorPanel(this._layout);
+                }
+            });
+            GwLayoutController.$injector = [];
+
             return {
                 restrict: "A",
-                controller: "gwLayoutController",
+                controller: GwLayoutController,
                 controllerAs: "gwLayoutCtrl",
                 compile: function (tEle) {
                     tEle.css({
@@ -26,7 +48,7 @@
                     });
                     return function (scope, iEle, iAttr, ctrl) {
                         iEle.ready(function () {
-                            ctrl.layout = iEle.layout({
+                            ctrl.setLayout(iEle.layout({
                                 applyDemoStyles: true,
                                 north: {
                                     size: 95,
@@ -42,12 +64,12 @@
                                     spacing_open: 15,
                                     spacing_closed: 15
                                 }
-                            });
+                            }));
                         });
                     }
                 }
             };
-        }).directive("gwLayoutTop", function () {
+        }]).directive("gwLayoutTop", function () {
             return {
                 restrict: "A",
                 compile: function (tEle) {

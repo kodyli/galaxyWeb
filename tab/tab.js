@@ -34,11 +34,10 @@
                 }
             }
         })
-        .directive("gwTabs", ["dialog", function (dialog) {
-            function GwTabsController(gwTabsService) {
+        .directive("gwTabs", ["gwTabsService", "dialog", function (gwTabsService, dialog) {
+            function GwTabsController() {
                 this.element = null;
                 this.tabs = [];
-                this._gwTabsService = gwTabsService;
             }
             angular.extend(GwTabsController.prototype, {
                 /**
@@ -59,7 +58,7 @@
                     var indexes = this._getSiblingTabIndexes(tab, function (siblingTab) {
                         siblingTab.isDisabled = true;
                     });
-                    this._gwTabsService.disableTabsByIndex(this.element, indexes);
+                    gwTabsService.disableTabsByIndex(this.element, indexes);
                 },
                 /**
                  * Enable the sibling tabs of a tab.
@@ -71,7 +70,7 @@
                         indexes = this._getSiblingTabIndexes(tab, function (siblingTab) {
                             siblingTab.isDisabled = false;
                         });
-                    this._gwTabsService.enableTabsByIndex(this.element, indexes);
+                    gwTabsService.enableTabsByIndex(this.element, indexes);
                 },
                 /**
                  * Active a tab.
@@ -82,7 +81,7 @@
                     var index = this.tabs.indexOf(tab);
                     if (index >= 0) {
                         tab.isActive = true;
-                        this._gwTabsService.activateTabByIndex(this.element, index);
+                        gwTabsService.activateTabByIndex(this.element, index);
                     }
                 },
                 /**
@@ -123,7 +122,7 @@
                 }
             });
 
-            GwTabsController.$injector = ["gwTabsService"];
+            GwTabsController.$injector = [];
 
             return {
                 restrict: "E",
