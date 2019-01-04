@@ -1,10 +1,44 @@
 (function (angular) {
     //Mediator Design Pattern
     angular.module("gw.tab", ["gw.dialog"])
+        .factory("gwTabsService", function () {
+            /**
+             * Helper functions that import from JQuery UI Tabs Widget.
+             * Adapter Design Pattern.
+             */
+            return {
+                activateTabByIndex: activateTabByIndex,
+                disableTabsByIndex: disableTabsByIndex,
+                enableTabsByIndex: enableTabsByIndex
+            };
+
+            function activateTabByIndex(element, tabIndex) {
+                element.tabs("option", "active", tabIndex);
+            }
+
+            function disableTabsByIndex(element, tabIndexes) {
+                element.tabs("option", "disabled", tabIndexes);
+            }
+
+            function enableTabsByIndex(element, tabIndexes) {
+                var disabledTabIndexes = element.tabs("option", "disabled");
+                if (angular.isArray(disabledTabIndexes)) {
+                    var self = this,
+                        newDisabledTabIndexes = [];
+                    disabledTabIndexes.forEach(function (tabIndex) {
+                        if (tabIndexes.indexOf(tabIndex) < 0) {
+                            newDisabledTabIndexes.push(tabIndex);
+                        }
+                    });
+                    disableTabsByIndex(element, newDisabledTabIndexes);
+                }
+            }
+        })
         .directive("gwTabs", ["dialog", function (dialog) {
-            function GwTabsController() {
+            function GwTabsController(gwTabsService) {
                 this.element = null;
                 this.tabs = [];
+                this._gwTabsService = gwTabsService;
             }
             angular.extend(GwTabsController.prototype, {
                 /**
@@ -22,11 +56,10 @@
                  * @param {Tab} tab
                  */
                 disableSiblings: function (tab) {
-                    var self = this,
-                        indexes = this._getSiblingTabIndexes(tab, function (siblingTab) {
-                            siblingTab.isDisabled = true;
-                        });
-                    this._disable(indexes);
+                    var indexes = this._getSiblingTabIndexes(tab, function (siblingTab) {
+                        siblingTab.isDisabled = true;
+                    });
+                    this._gwTabsService.disableTabsByIndex(this.element, indexes);
                 },
                 /**
                  * Enable the sibling tabs of a tab.
@@ -38,7 +71,7 @@
                         indexes = this._getSiblingTabIndexes(tab, function (siblingTab) {
                             siblingTab.isDisabled = false;
                         });
-                    this._enable(indexes);
+                    this._gwTabsService.enableTabsByIndex(this.element, indexes);
                 },
                 /**
                  * Active a tab.
@@ -49,7 +82,7 @@
                     var index = this.tabs.indexOf(tab);
                     if (index >= 0) {
                         tab.isActive = true;
-                        this._activate(index);
+                        this._gwTabsService.activateTabByIndex(this.element, index);
                     }
                 },
                 /**
@@ -87,33 +120,10 @@
                         }
                     });
                     return siblingTabIndexes;
-                },
-                /**
-                 * Helper functions that import from JQuery UI Tabs Widget.
-                 * To-do: Use Adapter Design Pattern to seperate those functions.
-                 */
-                _activate: function (tabIndex) {
-                    this.element.tabs("option", "active", tabIndex);
-                },
-                _disable: function (tabIndexes) {
-                    this.element.tabs("option", "disabled", tabIndexes);
-                },
-                _enable: function (tabIndexes) {
-                    var disabledTabIndexes = this.element.tabs("option", "disabled");
-                    if (angular.isArray(disabledTabIndexes)) {
-                        var self = this,
-                            newDisabledTabIndexes = [];
-                        disabledTabIndexes.forEach(function (tabIndex) {
-                            if (tabIndexes.indexOf(tabIndex) < 0) {
-                                newDisabledTabIndexes.push(tabIndex);
-                            }
-                        });
-                        this._disable(newDisabledTabIndexes);
-                    }
                 }
             });
 
-            GwTabsController.$injector = [];
+            GwTabsController.$injector = ["gwTabsService"];
 
             return {
                 restrict: "E",
@@ -253,7 +263,7 @@
                 scope: {
                     tabId: '@',
                     tabTitle: '@',
-                    tabInstance: '=?'
+                    tabController: '=?'
                 },
                 controller: GwTabController,
                 controllerAs: 'gwTabCtrl',
@@ -262,23 +272,26 @@
                     tEle.css({
                         display: "block"
                     });
-                    return function (scope, iEle, iAttr, ctrls) {
-                        var gwTabCtrl = ctrls[0],
-                            gwTabsCtrl = ctrls[1];
-                        if (iAttr.hasOwnProperty("enable")) {
-                            gwTabCtrl.isDisabled = false;
+                    return {
+                        pre: function () {},
+                        post: function (scope, iEle, iAttr, ctrls) {
+                            var gwTabCtrl = ctrls[0],
+                                gwTabsCtrl = ctrls[1];
+                            if (iAttr.hasOwnProperty("enable")) {
+                                gwTabCtrl.isDisabled = false;
+                            }
+                            if (iAttr.hasOwnProperty("disableSiblings")) {
+                                gwTabCtrl.isDisabled = false;
+                                gwTabCtrl.activate(function () {
+                                    gwTabsCtrl.disableSiblings(gwTabCtrl);
+                                });
+                            }
+                            if (iAttr.hasOwnProperty("saveWarning")) {
+                                gwTabCtrl.hasSaveWarning = true;
+                            }
+                            scope.tabController = gwTabCtrl;
+                            gwTabsCtrl.attach(gwTabCtrl);
                         }
-                        if (iAttr.hasOwnProperty("disableSiblings")) {
-                            gwTabCtrl.isDisabled = false;
-                            gwTabCtrl.activate(function () {
-                                gwTabsCtrl.disableSiblings(gwTabCtrl);
-                            });
-                        }
-                        if (iAttr.hasOwnProperty("saveWarning")) {
-                            gwTabCtrl.hasSaveWarning = true;
-                        }
-                        scope.tabInstance = gwTabCtrl;
-                        gwTabsCtrl.attach(gwTabCtrl);
                     }
                 }
             };

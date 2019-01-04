@@ -14,6 +14,5 @@
                     $("<div><p>" + config.msg + "</p></div>").dialog(angular.extend({}, dialogConfig, config));
                 }
             };
-        }])
-        .directive("dialog", function () {});
+        }]);
 })(window.angular);
