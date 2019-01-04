@@ -7,6 +7,7 @@
             this.name = "test";
             this.find = function () {
                 console.log(this.searchTab);
+                this.searchTab.enableSiblings()("noteTab")
             };
             this.save = function () {
                 var errorsHandler = errorService.getErrorsHandler($scope);

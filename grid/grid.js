@@ -48,7 +48,7 @@
                         var gwGridCtrl = ctrls[0],
                             gwTabCtrl = ctrls[1];
                         scope.gridInstance = gwGridCtrl;
-                        gwTabCtrl.afterActivated(gwGridCtrl.init, gwGridCtrl);
+                        gwTabCtrl.activate(gwGridCtrl.init, gwGridCtrl);
                         iEle.ready(function () {
                             var grid = iEle.children("table").filter(":first").jqGrid({
                                 url: 'http://trirand.com/blog/phpjqgrid/examples/jsonp/getjsonp.php?callback=?&qwery=longorders',
