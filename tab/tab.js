@@ -150,10 +150,6 @@
                             var newTab = gwTabsCtrl.getTabById(newPanelId)
                             if (!newTab.isActive && newTab.hasSaveWarning) {
                                 dialog.dialog({
-                                    classes: {
-                                        "ui-dialog-titlebar-close": "hidden"
-                                    },
-                                    closeOnEscape: false,
                                     title: "Warning",
                                     msg: "Your changes are not saved yet, do you want to switch tab?",
                                     buttons: {

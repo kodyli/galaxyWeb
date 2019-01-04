@@ -3,7 +3,11 @@
         .constant("dialogConfig", {
             modal: true,
             draggable: false,
-            resizable: false,
+            resizable: true,
+            classes: {
+                "ui-dialog-titlebar-close": "hidden-titlebar-close"
+            },
+            closeOnEscape: false,
             close: function () {
                 $(this).dialog("destroy");
             }
