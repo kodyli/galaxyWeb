@@ -15,10 +15,11 @@
             }
         })
         .directive("gwLayout", ["gwLayoutService", function (gwLayoutService) {
-            function GwLayoutController() {
+            function LayoutController() {
                 this._layout = null;
             }
-            angular.extend(GwLayoutController.prototype, {
+            LayoutController.$injector = [];
+            angular.extend(LayoutController.prototype, {
                 setLayout: function (layoutEle) {
                     this._layout = layoutEle;
                 },
@@ -29,12 +30,12 @@
                     gwLayoutService.openErrorPanel(this._layout);
                 }
             });
-            GwLayoutController.$injector = [];
+
 
             return {
                 restrict: "A",
-                controller: GwLayoutController,
-                controllerAs: "gwLayoutCtrl",
+                controller: LayoutController,
+                controllerAs: "layoutCtrl",
                 compile: function (tEle) {
                     tEle.css({
                         display: "block",

@@ -21,14 +21,7 @@
                     screenScope.$destroy();
                 }
                 screenScope = $scope.$new(true, $scope);
-                var nodes = [
-                    "<div",
-                        "gw-layout><gw-content gw-layout-center>",
-                            tElement,
-                        "</gw-content><gw-error gw-layout-right></gw-error>",
-                    "</div>"
-                ];
-                var iElement = $compile(nodes.join(""))(screenScope);
+                var iElement = $compile(tElement)(screenScope);
                 $element.empty().append(iElement);
             };
             self.handleError = function (error) {

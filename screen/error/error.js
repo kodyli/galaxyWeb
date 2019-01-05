@@ -1,5 +1,4 @@
 (function (angular) {
-    var i = 0;
     angular.module("gw.screen.error", [])
         .value("ErrorType", {
             FIELD_ERROR: "fieldError"
@@ -86,7 +85,6 @@
         .controller("errorController", ["$scope", "$element", "errorFactory", function ($scope, $element, errorFactory) {
             var self = this;
             var errors = [];
-            this.i = i = i + 1;
             self.handleErrors = function (resData) {
                 self.clearErrors();
                 errors = errorFactory.createErrors(resData, function (error) {
@@ -122,8 +120,8 @@
             return {
                 controller: "errorController",
                 controllerAs: "errorCtrl",
-                link: function (scope) {
-                    console.log("gwError", scope);
+                link: function (scope, iEle, iAttr) {
+                    console.log(scope);
                 }
             };
         });

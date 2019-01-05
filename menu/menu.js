@@ -174,7 +174,6 @@
                 compile: function (tEle, tAttr) {
                     tEle.addClass("menu");
                     return function (scope, iEle, iAttr, menuCtrl) {
-                        console.log("gwMenu", scope);
                         menuCtrl.loadNodes();
                     }
                 }

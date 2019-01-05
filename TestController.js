@@ -6,8 +6,11 @@
             var dialogScope;
             this.name = "test";
             this.find = function () {
-                console.log(this.searchTab);
-                this.searchTab.enableSiblings()("noteTab")
+                if (this.name === "error") {
+
+                } else {
+                    this.searchTabCtrl.enableSiblings()("noteTab");
+                }
             };
             this.save = function () {
                 var errorsHandler = errorService.getErrorsHandler($scope);
@@ -33,12 +36,6 @@
             };
             this.addInvoice = function () {
                 dialogScope = $scope.$new();
-                console.log("dialog", dialogScope);
-                var nodes = [
-                    "<div gw-layout><gw-content gw-layout-center>",
-                    dialogHtml.join(""),
-                    "</gw-content><gw-error gw-layout-right></gw-error></div>"
-                ];
                 var content = $compile("<gw-screen auto-load><gw-screen>")(dialogScope);
                 dialog = $("<div>").append(content);
                 dialog.dialog({
