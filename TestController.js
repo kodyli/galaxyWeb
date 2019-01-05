@@ -4,10 +4,11 @@
             console.log("TestScreen", $scope);
             var dialog;
             var dialogScope;
+            var errorCtrl = $scope.errorCtrl;
             this.name = "test";
             this.find = function () {
                 if (this.name === "error") {
-
+                    
                 } else {
                     this.searchTabCtrl.enableSiblings()("noteTab");
                 }
