@@ -1,48 +1,60 @@
 (function (angular) {
 
+    function ScreenController($scope, $compile, $element) {
+        var screenScope = null,
+            errorCtrl = null,
+            contentCtrl = null,
+            layoutCtrl = null;
+
+        this.attachError = function (errorData) {
+            errorCtrl.attachError(errorData);
+        };
+        this.handleError = function (error) {
+            contentCtrl.handleError(error);
+        };
+
+        this.setErrorController = function (errorController) {
+            errorCtrl = errorController;
+            errorCtrl.setScreenController(this);
+        };
+        this.getErrorController = function () {
+            return errorCtrl;
+        };
+        this.setContentController = function (contentController) {
+            contentCtrl = contentController;
+            contentCtrl.setScreenController(this);
+        };
+        this.getContentController = function () {
+            return contentCtrl;
+        };
+
+        this.openErrorPanel = function () {
+            $scope.layoutCtrl.openErrorPanel();
+        }
+        this.closeErrorPanel = function () {
+            $scope.layoutCtrl.closeErrorPanel();
+        };
+    }
+    ScreenController.$injector = ["$scope", "$compile", "$element"];
+
+    function ScreenDirective() {
+        return {
+            controller: "screenController",
+            controllerAs: "screenCtrl",
+            compile: function (tEle, tAttr) {
+                tEle.css({
+                    display: "block"
+                });
+                return function (scope, iEle, iAttr, screenCtrl) {
+
+                };
+            }
+        };
+    }
+    ScreenDirective.$injector = [];
+
     angular.module("gw.screen", ["gw.screen.error", "gw.screen.content"])
-        .service("screenService", ["screenHtml", function (screenHtml) {
-            var self = this;
-            self.loadScreen = function (screen) {
-                return screenHtml.join("");
-            };
-            self.handleError = function (error, $element) {
-                $element.find("[ng-model$='" + error.ngModel + "']")
-                    .filter(":first")
-                    .select();
-            };
-        }])
-        .controller("screenController", ["$scope", "$compile", "$element", "screenService", function ($scope, $compile, $element, screenService) {
-            var self = this;
-            var screenScope = null;
-            self.loadScreen = function (pageNode) {
-                var tElement = screenService.loadScreen(pageNode);
-                if (screenScope != null) {
-                    screenScope.$destroy();
-                }
-                screenScope = $scope.$new(true, $scope);
-                var iElement = $compile(tElement)(screenScope);
-                $element.empty().append(iElement);
-            };
-            self.handleError = function (error) {
-                screenService.handleError(error, $element);
-            };
-	}])
-        .directive("gwScreen", function () {
-            return {
-                controller: "screenController",
-                controllerAs: "screenCtrl",
-                compile: function (tEle, tAttr) {
-                    tEle.css({
-                        display: "block"
-                    });
-                    return function (scope, iEle, iAttr, screenCtrl) {
-                        if (iAttr.hasOwnProperty("autoLoad")) {
-                            screenCtrl.loadScreen({});
-                        }
-                    };
-                }
-            };
-        });
+        .controller("screenController", ScreenController)
+        .directive("gwScreen", ScreenDirective);
 
 })(window.angular);

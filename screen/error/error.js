@@ -1,128 +1,101 @@
 (function (angular) {
-    angular.module("gw.screen.error", [])
-        .value("ErrorType", {
+
+
+    function errorFactory(GwErrorType, gwBaseErrorFactor, gwFieldErrorFactor) {
+        return {
+            createError: createError,
+            createErrors: createErrors
+        };
+
+        function createError(errorData, errorHandler, context) {
+            var error = null;
+            switch (errorData.errorType) {
+                case GwErrorType.FIELD_ERROR:
+                    error = gwFieldErrorFactor.create(errorData, errorHandler, context);
+                    break;
+                default:
+                    error = gwBaseErrorFactor.create(errorData, errorHandler, context);
+            }
+            return error;
+        }
+
+        function createErrors(resData, errorHandler, context) {
+            var errors = [];
+            angular.forEach(resData, function (errorData) {
+                if (errorData) {
+                    errors.push(createError(errorData, errorHandler, context));
+                } else {
+                    throw "Invalid Error Data."
+                }
+            });
+            return errors;
+        }
+    }
+    errorFactory.$injector = ["GwErrorType", "gwBaseErrorFactor", "gwFieldErrorFactor"];
+
+    function ErrorController($element, gwErrorFactory) {
+        var errors = [],
+            screenCtrl = null,
+            ol = $("<ol>");
+        this.setScreenController = function (screenController) {
+            screenCtrl = screenController;
+        };
+        this.handleErrors = function (resData) {
+            this.clearErrors();
+            errors = gwErrorFactory.createErrors(resData, function (error) {
+                screenCtrl.handleError(error);
+            });
+            this._render(errors);
+            if (errors.length > 0) {
+                screenCtrl.openErrorPanel();
+            } else {
+                screenCtrl.closeErrorPanel();
+            }
+        };
+        this.attachError = function (errorData) {
+            var error = gwErrorFactory.createError(errorData, function (error) {
+                screenCtrl.handleError(error);
+            });
+            ol.append(error.toHtml());
+        };
+        this.clearErrors = function () {
+            errors = [];
+            this._render(errors);
+        };
+        this.hasErrors = function () {
+            return errors.length > 0;
+        }
+        this._render = function (errors) {
+            if (errors.length > 0) {
+                angular.forEach(errors, function (error) {
+                    ol.append(error.toHtml());
+                });
+                $element.append(ol);
+            } else {
+                $element.empty();
+            }
+        };
+    }
+
+    ErrorController.$injector = ["$element", "gwErrorFactory"];
+
+    function ErrorDirective() {
+        return {
+            controller: "gwErrorController",
+            controllerAs: "errorCtrl",
+            require: ["gwError", "^^gwScreen"],
+            link: function (scope, iEle, iAttr, ctrls) {
+                ctrls[1].setErrorController(ctrls[0]);
+            }
+        };
+    }
+    ErrorDirective.$injector = [];
+
+    angular.module("gw.screen.error", ["gw.screen.error.baseError", "gw.screen.error.fieldError"])
+        .value("GwErrorType", {
             FIELD_ERROR: "fieldError"
         })
-        .factory("errorFactory", ["ErrorType", function (ErrorType) {
-
-            function Error(data, errorHandler, context) {
-                this.message = "Unknown Error";
-                this._errorHandler = errorHandler || angular.noop;
-                this._context = context;
-            }
-            Error.prototype = angular.extend(Object.create(Object.prototype), {
-                contructor: Error,
-                handle: function () {
-                    this._errorHandler.call(this._context, this);
-                },
-                toHtml: function () {
-                    return "";
-                }
-            });
-
-            function FieldError(data, errorHandler, context) {
-                Error.apply(this, arguments);
-                this.ngModel = data.ngModel;
-                this.message = "Field Error";
-            }
-            FieldError.prototype = angular.extend(Object.create(Error.prototype), {
-                contructor: FieldError,
-                handle: function () {
-                    Error.prototype.handle.call(this);
-                },
-                toHtml: function () {
-                    var self = this;
-                    var a = $("<a>").attr("href", "#")
-                        .text(self.message)
-                        .click(function (e) {
-                            self.handle();
-                            e.preventDefault();
-                        });
-                    return $("<li>").append(a);
-                }
-            });
-
-            return {
-                createErrors: function (resData, errorHandler, context) {
-                    var errors = [];
-                    angular.forEach(resData, function (errorData) {
-                        if (errorData) {
-                            switch (errorData.errorType) {
-                                case ErrorType.FIELD_ERROR:
-                                    errors.push(new FieldError(errorData, errorHandler, context));
-                                    break;
-                                default:
-                                    errors.push(new Error(errorData, errorHandler, context));
-                            }
-                        } else {
-                            throw "Invalid Error Data."
-                        }
-                    });
-                    return errors;
-                }
-            };
-	}])
-        .service("errorService", function () {
-            this.getErrorsHandler = function (scope) {
-                var parent = scope;
-                while (!parent.errorCtrl) {
-                    parent = parent.$parent;
-                }
-                var errorCtrl = parent.errorCtrl;
-                return function errorsHandler(resData) {
-                    errorCtrl.handleErrors(resData);
-                    return errorCtrl.hasErrors();
-                };
-            };
-            this.getDialogErrorsHandler = function (scope) {
-                var errorCtrl = scope.errorCtrl;
-                return function errorsHandler(resData) {
-                    errorCtrl.handleErrors(resData);
-                    return errorCtrl.hasErrors();
-                };
-            }
-        })
-        .controller("errorController", ["$scope", "$element", "errorFactory", function ($scope, $element, errorFactory) {
-            var self = this;
-            var errors = [];
-            self.handleErrors = function (resData) {
-                self.clearErrors();
-                errors = errorFactory.createErrors(resData, function (error) {
-                    $scope.screenCtrl.handleError(error);
-                });
-                self._render(errors);
-                if (errors.length > 0) {
-                    $scope.gwLayoutCtrl.openRightPanel();
-                } else {
-                    $scope.gwLayoutCtrl.closeRightPanel();
-                }
-            };
-            self.clearErrors = function () {
-                errors = [];
-                self._render(errors);
-            };
-            self.hasErrors = function () {
-                return errors.length > 0;
-            }
-            self._render = function (errors) {
-                if (errors.length > 0) {
-                    var ol = $("<ol>");
-                    angular.forEach(errors, function (error) {
-                        ol.append(error.toHtml());
-                    });
-                    $element.append(ol);
-                } else {
-                    $element.empty();
-                }
-            };
-	}])
-        .directive("gwError", function () {
-            return {
-                controller: "errorController",
-                controllerAs: "errorCtrl",
-                link: function (scope, iEle, iAttr) {
-                    console.log(scope);
-                }
-            };
-        });
+        .factory("gwErrorFactory", errorFactory)
+        .controller("gwErrorController", ErrorController)
+        .directive("gwError", ErrorDirective);
 })(window.angular);

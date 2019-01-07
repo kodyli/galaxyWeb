@@ -131,12 +131,14 @@
                 transclude: true,
                 template: "<ul><li ng-repeat='tab in gwTabsCtrl.tabs'><a href='#{{tab.id}}'>{{tab.title}}</a></li></ul><div ng-transclude></div>",
                 scope: {},
+                require: ["gwTabs", "^^gwContent"],
                 compile: function (tEle) {
                     tEle.css({
                         display: "block"
                     });
-                    return function (scope, iEle, iAttr, gwTabsCtrl) {
-
+                    return function (scope, iEle, iAttr, ctrls) {
+                        var gwTabsCtrl = ctrls[0];
+                        ctrls[1].setTabsController(ctrls[0]);
                         iEle.ready(function () {
                             gwTabsCtrl.element = iEle.tabs({
                                 disabled: gwTabsCtrl.getDisabledTabIndexes(),
@@ -279,8 +281,12 @@
                             if (iAttr.hasOwnProperty("enable")) {
                                 gwTabCtrl.isDisabled = false;
                             }
+                            if (iAttr.hasOwnProperty("active")) {
+                                gwTabCtrl.isActive = true;
+                            }
                             if (iAttr.hasOwnProperty("disableSiblings")) {
                                 gwTabCtrl.isDisabled = false;
+                                gwTabCtrl.isActive = true;
                                 gwTabCtrl.activate(function () {
                                     gwTabsCtrl.disableSiblings(gwTabCtrl);
                                 });

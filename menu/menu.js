@@ -4,7 +4,7 @@
             PAGE: "page",
             FOLDER: "folder"
         })
-        .factory("menuFactory", ["NodeType", function (NodeType) {
+        .factory("menuFactory", ["NodeType", "screenHtml", function (NodeType, screenHtml) {
 
             function ANode(data, parentNode) {
                 this.id = data.id;
@@ -152,7 +152,7 @@
             var self = this;
             self.loadNodes = function () {
                 var nodes = menuService.loadNodes(function (pageNode) {
-                    $scope.screenCtrl.loadScreen(pageNode);
+                    $scope.pageCtrl.loadPage(pageNode);
                 });
                 self._render(nodes);
             };

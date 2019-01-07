@@ -57,7 +57,7 @@
 					}
 			]
 	}]).constant("screenHtml", [
-            "<div gw-layout ng-controller='TestController as ctrl'>",
+            "<gw-screen gw-layout ng-controller='TestController as ctrl'>",
                 "<gw-content gw-layout-center>",
                     "<gw-tabs id='screenTabs'>",
                         "<gw-tab tab-id='searchTab' tab-title='Search' save-warning disable-siblings tab-controller='ctrl.searchTabCtrl'>",
@@ -76,7 +76,7 @@
                     "</gw-tabs>",
                 "</gw-content>",
                 "<gw-error gw-layout-right></gw-error>",
-            "</div>"
+            "</gw-screen>"
     ]).constant("dialogHtml", [
         "<gw-tabs id='dialogTabs'>",
             "<gw-tab tab-id='searchTab' tab-title='Search'>",

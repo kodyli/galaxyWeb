@@ -30,8 +30,6 @@
                     gwLayoutService.openErrorPanel(this._layout);
                 }
             });
-
-
             return {
                 restrict: "A",
                 controller: LayoutController,

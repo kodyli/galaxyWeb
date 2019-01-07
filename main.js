@@ -1,5 +1,5 @@
 (function (angular) {
-    angular.module("main", ["gw.data", "gw.layout", "gw.tab", "gw.menu", "gw.screen", "gw.test"])
+    angular.module("main", ["gw.data", "gw.layout", "gw.tab", "gw.menu", "gw.page", "gw.test"])
         .controller("mainController", function ($scope) {
             console.log("main", $scope);
         })

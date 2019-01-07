@@ -1,19 +1,24 @@
 (function (angular) {
     angular.module("gw.test", [])
-        .controller("TestController", ["$scope", "$compile", "$element", "errorService", "dialogHtml", "screenService", function ($scope, $compile, $element, errorService, dialogHtml, screenService) {
+        .controller("TestController", ["$scope", "$compile", "$element", "dialogHtml", function ($scope, $compile, $element, dialogHtml) {
             console.log("TestScreen", $scope);
             var dialog;
             var dialogScope;
-            var errorCtrl = $scope.errorCtrl;
             this.name = "test";
             this.find = function () {
                 if (this.name === "error") {
-                    
+                    $scope.errorCtrl.handleErrors([{
+                        tabId: "searchTab",
+                        ngModel: "name",
+                        errorType: 'fieldError',
+                        message: "Field Error"
+                    }]);
                 } else {
                     this.searchTabCtrl.enableSiblings()("noteTab");
                 }
             };
-            this.save = function () {
+
+            /*this.save = function () {
                 var errorsHandler = errorService.getErrorsHandler($scope);
                 if (this.name === "error") {
                     errorsHandler([{
@@ -22,7 +27,7 @@
                         message: "Field Error"
                     }]);
                 }
-            };
+            };*/
             this.addRow1 = function () {
                 this.grid1.addRow({
                     OrderID: '21',
@@ -37,7 +42,7 @@
             };
             this.addInvoice = function () {
                 dialogScope = $scope.$new();
-                var content = $compile("<gw-screen auto-load><gw-screen>")(dialogScope);
+                var content = $compile("<gw-page auto-load><gw-page>")(dialogScope);
                 dialog = $("<div>").append(content);
                 dialog.dialog({
                     title: "Add an Invoice",
@@ -47,37 +52,20 @@
                 });
             };
             this.closDialog = function () {
-                dialog.empty().dialog("destroy");
-                //dialogScope.$destroy();
-            }
-            this.saveInvoice = function () {
-                if (this.name === "error") {
-                    var errorsHandler = errorService.getDialogErrorsHandler(dialogScope);
-                    errorsHandler([{
-                        ngModel: 'name',
-                        errorType: 'fieldError',
-                        message: "Field Error"
-                    }]);
-                } else {
-                    this.closDialog();
+                    dialog.empty().dialog("destroy");
+                    //dialogScope.$destroy();
                 }
-            }
-        }])
-        /*.controller("AddInvoiceController", function ($scope, errorService) {
-                    console.log("dialog", $scope);
-                    this.name = "test";
-                    this.saveInvoice = function () {
-                        if (this.name === "error") {
-                            var errorsHandler = errorService.getErrorsHandler($scope);
-                            errorsHandler([{
-                                ngModel: 'name',
-                                errorType: 'fieldError',
-                                message: "Field Error"
-                            }]);
-                        } else {
-                            $scope.testCtrl.closDialog();
-                        }
+                /*this.saveInvoice = function () {
+                    if (this.name === "error") {
+                        var errorsHandler = errorService.getDialogErrorsHandler(dialogScope);
+                        errorsHandler([{
+                            ngModel: 'name',
+                            errorType: 'fieldError',
+                            message: "Field Error"
+                        }]);
+                    } else {
+                        this.closDialog();
                     }
-                })*/
-    ;
+                }*/
+        }]);
 })(window.angular);
