@@ -1,10 +1,9 @@
 (function (angular) {
 
-    function ScreenController($scope, $compile, $element) {
+    function ScreenController($scope) {
         var screenScope = null,
             errorCtrl = null,
-            contentCtrl = null,
-            layoutCtrl = null;
+            contentCtrl = null;
 
         this.attachError = function (errorData) {
             errorCtrl.attachError(errorData);
@@ -13,48 +12,38 @@
             contentCtrl.handleError(error);
         };
 
-        this.setErrorController = function (errorController) {
-            errorCtrl = errorController;
+        this.setErrorController = function (gwErrorController) {
+            errorCtrl = gwErrorController;
             errorCtrl.setScreenController(this);
         };
-        this.getErrorController = function () {
-            return errorCtrl;
-        };
-        this.setContentController = function (contentController) {
-            contentCtrl = contentController;
+        this.setContentController = function (gwContentController) {
+            contentCtrl = gwContentController;
             contentCtrl.setScreenController(this);
-        };
-        this.getContentController = function () {
-            return contentCtrl;
         };
 
         this.openErrorPanel = function () {
-            $scope.layoutCtrl.openErrorPanel();
+            $scope.gwLayoutCtrl.openErrorPanel();
         }
         this.closeErrorPanel = function () {
-            $scope.layoutCtrl.closeErrorPanel();
+            $scope.gwLayoutCtrl.closeErrorPanel();
         };
     }
-    ScreenController.$injector = ["$scope", "$compile", "$element"];
+    ScreenController.$injector = ["$scope"];
 
-    function ScreenDirective() {
+    function screenDirective() {
         return {
-            controller: "screenController",
-            controllerAs: "screenCtrl",
+            controller: "gwScreenController",
             compile: function (tEle, tAttr) {
                 tEle.css({
                     display: "block"
                 });
-                return function (scope, iEle, iAttr, screenCtrl) {
-
-                };
             }
         };
     }
-    ScreenDirective.$injector = [];
+    screenDirective.$injector = [];
 
     angular.module("gw.screen", ["gw.screen.error", "gw.screen.content"])
-        .controller("screenController", ScreenController)
-        .directive("gwScreen", ScreenDirective);
+        .controller("gwScreenController", ScreenController)
+        .directive("gwScreen", screenDirective);
 
 })(window.angular);

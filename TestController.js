@@ -7,7 +7,7 @@
             this.name = "test";
             this.find = function () {
                 if (this.name === "error") {
-                    $scope.errorCtrl.handleErrors([{
+                    $scope.gwErrorCtrl.handleErrors([{
                         tabId: "searchTab",
                         ngModel: "name",
                         errorType: 'fieldError',

@@ -6,10 +6,11 @@
         .directive("gwApp", function () {
             return {
                 restrict: "E",
-                controller: function () {},
-                controllerAs: "gwAppCtrl",
-                link: function (scope) {
-                    console.log("gwApp", scope);
+                controller: angular.noop,
+                compile: function (tEle) {
+                    tEle.css({
+                        display: "block"
+                    })
                 }
             }
         });

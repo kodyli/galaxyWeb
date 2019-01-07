@@ -34,12 +34,12 @@
                 }
             }
         })
-        .directive("gwTabs", ["gwTabsService", "dialog", function (gwTabsService, dialog) {
-            function GwTabsController() {
+        .directive("gwTabs", ["gwTabsService", "gwDialogFactory", function (gwTabsService, gwDialogFactory) {
+            function TabsController() {
                 this.element = null;
                 this.tabs = [];
             }
-            angular.extend(GwTabsController.prototype, {
+            angular.extend(TabsController.prototype, {
                 /**
                  * Add a new tab.
                  * @public
@@ -122,11 +122,11 @@
                 }
             });
 
-            GwTabsController.$injector = [];
+            TabsController.$injector = [];
 
             return {
                 restrict: "E",
-                controller: GwTabsController,
+                controller: TabsController,
                 controllerAs: "gwTabsCtrl",
                 transclude: true,
                 template: "<ul><li ng-repeat='tab in gwTabsCtrl.tabs'><a href='#{{tab.id}}'>{{tab.title}}</a></li></ul><div ng-transclude></div>",
@@ -151,7 +151,7 @@
                             var newPanelId = ui.newPanel.attr("id");
                             var newTab = gwTabsCtrl.getTabById(newPanelId)
                             if (!newTab.isActive && newTab.hasSaveWarning) {
-                                dialog.dialog({
+                                gwDialogFactory.dialog({
                                     title: "Warning",
                                     msg: "Your changes are not saved yet, do you want to switch tab?",
                                     buttons: {
@@ -181,7 +181,7 @@
         }])
         .directive("gwTab", function () {
 
-            function GwTabController($scope) {
+            function TabController($scope) {
                 this.id = $scope.tabId;
                 this.title = $scope.tabTitle;
                 this.isDisabled = true; //is this tab disabled
@@ -202,7 +202,7 @@
                 }];
             }
 
-            angular.extend(GwTabController.prototype, {
+            angular.extend(TabController.prototype, {
                 /**
                  * Bind an event handler to the "activate" event, or tigger the events.
                  * @public
@@ -255,7 +255,7 @@
                 }
             });
 
-            GwTabController.$injector = ["$scope"];
+            TabController.$injector = ["$scope"];
 
             return {
                 require: ['gwTab', '^^gwTabs'],
@@ -266,7 +266,7 @@
                     tabTitle: '@',
                     tabController: '=?'
                 },
-                controller: GwTabController,
+                controller: TabController,
                 controllerAs: 'gwTabCtrl',
                 template: "<div id='{{gwTabCtrl.id}}' ng-transclude></div>",
                 compile: function (tEle) {

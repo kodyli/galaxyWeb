@@ -20,20 +20,19 @@
     }
     ContentController.$injector = ["$scope", "$element"];
 
-    function ContentDirective() {
+    function contentDirective() {
         return {
             restrict: "E",
-            controller: "contentController",
-            controllerAs: "contentCtrl",
+            controller: "gwContentController",
             require: ["gwContent", "^^gwScreen"],
             link: function (scope, iEle, iAttr, ctrls) {
                 ctrls[1].setContentController(ctrls[0]);
             }
         };
     }
-    ContentDirective.$injector = [];
+    contentDirective.$injector = [];
 
     angular.module("gw.screen.content", ["gw.grid"])
-        .controller("contentController", ContentController)
-        .directive("gwContent", ContentDirective);
+        .controller("gwContentController", ContentController)
+        .directive("gwContent", contentDirective);
 })(window.angular);

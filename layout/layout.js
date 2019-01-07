@@ -33,7 +33,7 @@
             return {
                 restrict: "A",
                 controller: LayoutController,
-                controllerAs: "layoutCtrl",
+                controllerAs: "gwLayoutCtrl",
                 compile: function (tEle) {
                     tEle.css({
                         display: "block",

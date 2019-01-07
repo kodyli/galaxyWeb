@@ -7,11 +7,11 @@
     }
     PageService.$injector = ["screenHtml"];
 
-    function PageController($scope, $compile, $element, pageService) {
+    function PageController($scope, $compile, $element, gwPageService) {
         var self = this;
         var pageScope = null;
         self.loadPage = function (pageNode) {
-            var tElement = pageService.loadPage(pageNode);
+            var tElement = gwPageService.loadPage(pageNode);
             if (pageScope != null) {
                 pageScope.$destroy();
             }
@@ -21,11 +21,11 @@
         };
 
     }
-    PageController.$injector = ["$scope", "$compile", "$element", "pageService"];
+    PageController.$injector = ["$scope", "$compile", "$element", "gwPageService"];
 
-    function PageDirective() {
+    function pageDirective() {
         return {
-            controller: "pageController",
+            controller: "gwPageController",
             controllerAs: "pageCtrl",
             compile: function (tEle, tAttr) {
                 tEle.css({
@@ -39,10 +39,10 @@
             }
         };
     }
-    PageDirective.$injector = [];
+    pageDirective.$injector = [];
 
     angular.module("gw.page", ["gw.screen"])
-        .service("pageService", PageService)
-        .controller("pageController", PageController)
-        .directive("gwPage", PageDirective);
+        .service("gwPageService", PageService)
+        .controller("gwPageController", PageController)
+        .directive("gwPage", pageDirective);
 })(window.angular);

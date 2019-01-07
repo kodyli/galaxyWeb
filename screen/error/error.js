@@ -79,17 +79,17 @@
 
     ErrorController.$injector = ["$element", "gwErrorFactory"];
 
-    function ErrorDirective() {
+    function errorDirective() {
         return {
             controller: "gwErrorController",
-            controllerAs: "errorCtrl",
+            controllerAs: "gwErrorCtrl",
             require: ["gwError", "^^gwScreen"],
             link: function (scope, iEle, iAttr, ctrls) {
                 ctrls[1].setErrorController(ctrls[0]);
             }
         };
     }
-    ErrorDirective.$injector = [];
+    errorDirective.$injector = [];
 
     angular.module("gw.screen.error", ["gw.screen.error.baseError", "gw.screen.error.fieldError"])
         .value("GwErrorType", {
@@ -97,5 +97,5 @@
         })
         .factory("gwErrorFactory", errorFactory)
         .controller("gwErrorController", ErrorController)
-        .directive("gwError", ErrorDirective);
+        .directive("gwError", errorDirective);
 })(window.angular);
