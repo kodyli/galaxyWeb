@@ -6,6 +6,7 @@
             var dialogScope;
             this.name = "test";
             this.find = function () {
+                $scope.gwErrorCtrl.clearErrors(true);
                 if (this.name === "error") {
                     $scope.gwErrorCtrl.handleErrors([{
                         tabId: "searchTab",
@@ -17,17 +18,29 @@
                     this.searchTabCtrl.enableSiblings()("noteTab");
                 }
             };
-
-            /*this.save = function () {
-                var errorsHandler = errorService.getErrorsHandler($scope);
-                if (this.name === "error") {
-                    errorsHandler([{
-                        ngModel: 'name',
+            this.save = function () {
+                $scope.gwErrorCtrl.clearErrors(true);
+                var errors = [];
+                if (this.firstName === "error") {
+                    errors.push({
+                        tabId: 'detailsTab',
+                        ngModel: 'firstName',
                         errorType: 'fieldError',
                         message: "Field Error"
-                    }]);
+                    });
+
                 }
-            };*/
+                if (this.lastName === "error") {
+                    errors.push({
+                        tabId: 'noteTab',
+                        ngModel: 'lastName',
+                        errorType: 'fieldError',
+                        message: "Field Error"
+                    });
+
+                }
+                $scope.gwErrorCtrl.handleErrors(errors);
+            };
             this.addRow1 = function () {
                 this.grid1.addRow({
                     OrderID: '21',

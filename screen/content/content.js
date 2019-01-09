@@ -17,6 +17,14 @@
         this.getElement = function () {
             return $element;
         };
+        this.hasTabs = function () {
+            return tabsCtrl !== null;
+        }
+
+        this.activateTabById = function (tabId) {
+            var tab = tabsCtrl.getTabById(tabId);
+            tabsCtrl.activate(tab);
+        }
     }
     ContentController.$injector = ["$scope", "$element"];
 

@@ -8,10 +8,11 @@
 
         FieldError.prototype = GwError.createSubClass({
             contructor: FieldError,
-            display: function (contentCtrl) {
-                contentCtrl.getElement().find("[ng-model$='" + this.ngModel + "']")
-                    .filter(":first")
-                    .select();
+            display: function (gwContentCtrl) {
+                if (gwContentCtrl.hasTabs()) {
+                    gwContentCtrl.activateTabById(this.tabId);
+                }
+                gwContentCtrl.getElement().find("[ng-model$='" + this.ngModel + "']").filter(":first").select();
             },
             toHtml: function () {
                 var self = this;

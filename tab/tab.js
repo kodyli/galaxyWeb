@@ -79,7 +79,7 @@
                  */
                 activate: function (tab) {
                     var index = this.tabs.indexOf(tab);
-                    if (index >= 0) {
+                    if (index >= 0 && !tab.isActive) {
                         tab.isActive = true;
                         gwTabsService.activateTabByIndex(this.element, index);
                     }

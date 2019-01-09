@@ -52,15 +52,20 @@
                 screenCtrl.closeErrorPanel();
             }
         };
+
         this.attachError = function (errorData) {
             var error = gwErrorFactory.createError(errorData, function (error) {
                 screenCtrl.handleError(error);
             });
             ol.append(error.toHtml());
         };
-        this.clearErrors = function () {
+        this.clearErrors = function (closeErrorPanel) {
             errors = [];
+            closeErrorPanel = closeErrorPanel === true ? true : false;
             this._render(errors);
+            if (closeErrorPanel) {
+                screenCtrl.closeErrorPanel();
+            }
         };
         this.hasErrors = function () {
             return errors.length > 0;
@@ -72,7 +77,7 @@
                 });
                 $element.append(ol);
             } else {
-                $element.empty();
+                ol.empty();
             }
         };
     }
