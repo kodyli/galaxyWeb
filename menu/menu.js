@@ -147,39 +147,55 @@
     }
     MenuService.$injector = ["gwMenuFactory", "nodes"];
 
-    function MenuController($scope, $element, gwMenuService, GwNodeType) {
-        var self = this;
-        self.loadNodes = function () {
-            var nodes = gwMenuService.loadNodes(function (pageNode) {
-                $scope.pageCtrl.loadPage(pageNode);
-            });
-            self._render(nodes);
-        };
+    function menuDirective(gwMenuService) {
+        function MenuController() {
+            this.appCtrl = nullAppController;
+        }
+        MenuController.$injector = [];
 
-        self._render = function (nodes) {
-            var ul = $("<ul>");
-            angular.forEach(nodes, function (node) {
-                ul.append(node.toHtml());
-            });
-            $element.append(ul);
-        };
-    }
-    MenuController.$injector = ["$scope", "$element", "gwMenuService", "GwNodeType"];
+        angular.extend(MenuController.prototype, {
+            loadNodes: function () {
+                var self = this;
+                return gwMenuService.loadNodes(function (page) {
+                    self.appCtrl.loadPage(page);
+                });
+            },
+            render: function (nodes, element) {
+                var ul = $("<ul>");
+                angular.forEach(nodes, function (node) {
+                    ul.append(node.toHtml());
+                });
+                element.append(ul);
+            }
+        });
 
-    function menuDirective() {
+
         return {
-            require: "gwMenu",
             restrict: "E",
-            controller: "gwMenuController",
+            controller: MenuController,
+            scope: {
+                name: "=?"
+            },
+            require: ["gwMenu", "^^?gwApp"],
             compile: function (tEle, tAttr) {
                 tEle.addClass("menu");
-                return function (scope, iEle, iAttr, menuCtrl) {
-                    menuCtrl.loadNodes();
+                return {
+                    pre: function (scope, iEle, iAttr, ctrls) {
+                        var gwMenuCtrl = ctrls[0],
+                            gwAppCtrl = ctrls[1] || gwMenuCtrl.appCtrl;
+                        gwAppCtrl.setMenuController(gwMenuCtrl);
+                        scope.name = gwMenuCtrl;
+                    },
+                    post: function (scope, iEle, iAttr, ctrls) {
+                        var gwMenuCtrl = ctrls[0];
+                        var nodes = gwMenuCtrl.loadNodes();
+                        gwMenuCtrl.render(nodes, iEle);
+                    }
                 }
             }
         };
     }
-    menuDirective.$injector = [];
+    menuDirective.$injector = ["gwMenuService"];
 
     angular.module("gw.menu", [])
         .value("GwNodeType", {
@@ -188,6 +204,5 @@
         })
         .factory("gwMenuFactory", menuFactory)
         .service("gwMenuService", MenuService)
-        .controller("gwMenuController", MenuController)
         .directive("gwMenu", menuDirective);
 })(window.angular, window.jQuery);

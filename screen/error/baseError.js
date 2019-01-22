@@ -2,14 +2,26 @@
 
     function Error(data, errorHandler, context) {
         this.tabId = data.tabId;
-        this.message = "Unknown Error";
+        this.message = data.message || "Unknown Error";
         this._errorHandler = errorHandler || angular.noop;
         this._context = context;
     }
     Error.prototype = angular.extend(Object.create(Error.prototype), {
         contructor: Error,
         display: angular.noop,
-        toHtml: angular.noop,
+        toHtml: function () {
+            var self = this;
+            var a = $("<a>").attr("href", "#")
+                .css({
+                    "text-decoration": "none"
+                })
+                .text(self.message)
+                .click(function (e) {
+                    self.handle();
+                    e.preventDefault();
+                });
+            return $("<li>").append(a);
+        },
         handle: function () {
             this._errorHandler.call(this._context, this);
         }

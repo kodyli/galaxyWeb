@@ -7,42 +7,62 @@
     }
     PageService.$injector = ["screenHtml"];
 
-    function PageController($scope, $compile, $element, gwPageService) {
-        var self = this;
-        var pageScope = null;
-        self.loadPage = function (pageNode) {
-            var tElement = gwPageService.loadPage(pageNode);
-            if (pageScope != null) {
-                pageScope.$destroy();
+    function pageDirective($compile, gwPageService) {
+
+        function PageController($scope, $element) {
+            this.appCtrl = nullAppController;
+            this.element = $element;
+            this._scope = $scope;
+            this._pageScope = null;
+        }
+
+        PageController.$injector = ["$scope", "$element"];
+
+        angular.extend(PageController.prototype, {
+            loadPage: function (page) {
+                return gwPageService.loadPage(page);
+            },
+            render: function (pageHtml, parentElement) {
+                parentElement = parentElement || this.element;
+                if (this._pageScope != null) {
+                    this._pageScope.$destroy();
+                }
+                this._pageScope = this._scope.$new(true, this._scope);
+                var iElement = $compile(pageHtml)(this._pageScope);
+                parentElement.empty().append(iElement);
             }
-            pageScope = $scope.$new(true, $scope);
-            var iElement = $compile(tElement)(pageScope);
-            $element.empty().append(iElement);
-        };
-
-    }
-    PageController.$injector = ["$scope", "$compile", "$element", "gwPageService"];
-
-    function pageDirective() {
+        });
         return {
-            controller: "gwPageController",
-            controllerAs: "pageCtrl",
-            compile: function (tEle, tAttr) {
+            controller: PageController,
+            scope: {
+                name: "=?"
+            },
+            require: ["gwPage", "^^?gwApp"],
+            compile: function (tEle) {
                 tEle.css({
                     display: "block"
                 });
-                return function (scope, iEle, iAttr, pageCtrl) {
-                    if (iAttr.hasOwnProperty("autoLoad")) {
-                        pageCtrl.loadPage({});
+                return {
+                    pre: function (scope, iEle, iAttr, ctrls) {
+                        var gwPageCtrl = ctrls[0],
+                            gwAppCtrl = ctrls[1] || gwPageCtrl.appCtrl;
+                        gwAppCtrl.setPageController(gwPageCtrl);
+                        scope.name = gwPageCtrl;
+                    },
+                    post: function (scope, iEle, iAttr, ctrls) {
+                        var gwPageCtrl = ctrls[0];
+                        if (iAttr.hasOwnProperty("autoLoad")) {
+                            var pageHtml = gwPageCtrl.loadPage({});
+                            gwPageCtrl.render(pageHtml, iEle);
+                        }
                     }
                 };
             }
         };
     }
-    pageDirective.$injector = [];
+    pageDirective.$injector = ["$compile", "gwPageService"];
 
     angular.module("gw.page", ["gw.screen"])
         .service("gwPageService", PageService)
-        .controller("gwPageController", PageController)
         .directive("gwPage", pageDirective);
 })(window.angular);

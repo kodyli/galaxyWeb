@@ -34,6 +34,7 @@
                 restrict: "A",
                 controller: LayoutController,
                 controllerAs: "gwLayoutCtrl",
+                require: ["gwLayout", "?gwScreen"],
                 compile: function (tEle) {
                     tEle.css({
                         display: "block",
@@ -45,27 +46,35 @@
                         top: "0px",
                         bottom: "0px"
                     });
-                    return function (scope, iEle, iAttr, ctrl) {
-                        iEle.ready(function () {
-                            ctrl.setLayout(iEle.layout({
-                                applyDemoStyles: true,
-                                north: {
-                                    size: 95,
-                                    spacing_open: 0,
-                                },
-                                west: {
-                                    size: 300,
-                                    spacing_open: 15,
-                                    spacing_closed: 15
-                                },
-                                east: {
-                                    initClosed: true,
-                                    spacing_open: 15,
-                                    spacing_closed: 15
-                                }
-                            }));
-                        });
-                    }
+                    return {
+                        pre: function (scope, iEle, iAttr, ctrls) {
+                            var gwLayoutCtrl = ctrls[0],
+                                gwScreenCtrl = ctrls[1] || nullScreenController;
+                            gwScreenCtrl.setLayoutController(gwLayoutCtrl);
+                        },
+                        post: function (scope, iEle, iAttr, ctrls) {
+                            var gwLayoutCtrl = ctrls[0];
+                            iEle.ready(function () {
+                                gwLayoutCtrl.setLayout(iEle.layout({
+                                    applyDemoStyles: true,
+                                    north: {
+                                        size: 95,
+                                        spacing_open: 0,
+                                    },
+                                    west: {
+                                        size: 300,
+                                        spacing_open: 15,
+                                        spacing_closed: 15
+                                    },
+                                    east: {
+                                        initClosed: true,
+                                        spacing_open: 15,
+                                        spacing_closed: 15
+                                    }
+                                }));
+                            });
+                        }
+                    };
                 }
             };
         }]).directive("gwLayoutTop", function () {

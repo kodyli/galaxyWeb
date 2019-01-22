@@ -1,7 +1,7 @@
 (function (angular) {
 
 
-    function errorFactory(GwErrorType, gwBaseErrorFactor, gwFieldErrorFactor) {
+    function errorFactory(GwErrorType, gwBaseErrorFactor, gwFieldErrorFactor, gwCellErrorFactor) {
         return {
             createError: createError,
             createErrors: createErrors
@@ -12,6 +12,9 @@
             switch (errorData.errorType) {
                 case GwErrorType.FIELD_ERROR:
                     error = gwFieldErrorFactor.create(errorData, errorHandler, context);
+                    break;
+                case GwErrorType.CELL_ERROR:
+                    error = gwCellErrorFactor.create(errorData, errorHandler, context);
                     break;
                 default:
                     error = gwBaseErrorFactor.create(errorData, errorHandler, context);
@@ -31,76 +34,90 @@
             return errors;
         }
     }
-    errorFactory.$injector = ["GwErrorType", "gwBaseErrorFactor", "gwFieldErrorFactor"];
+    errorFactory.$injector = ["GwErrorType", "gwBaseErrorFactor", "gwFieldErrorFactor", "gwCellErrorFactor"];
 
-    function ErrorController($element, gwErrorFactory) {
-        var errors = [],
-            screenCtrl = null,
-            ol = $("<ol>");
-        this.setScreenController = function (screenController) {
-            screenCtrl = screenController;
-        };
-        this.handleErrors = function (resData) {
-            this.clearErrors();
-            errors = gwErrorFactory.createErrors(resData, function (error) {
-                screenCtrl.handleError(error);
-            });
-            this._render(errors);
-            if (errors.length > 0) {
-                screenCtrl.openErrorPanel();
-            } else {
-                screenCtrl.closeErrorPanel();
-            }
-        };
 
-        this.attachError = function (errorData) {
-            var error = gwErrorFactory.createError(errorData, function (error) {
-                screenCtrl.handleError(error);
-            });
-            ol.append(error.toHtml());
-        };
-        this.clearErrors = function (closeErrorPanel) {
-            errors = [];
-            closeErrorPanel = closeErrorPanel === true ? true : false;
-            this._render(errors);
-            if (closeErrorPanel) {
-                screenCtrl.closeErrorPanel();
-            }
-        };
-        this.hasErrors = function () {
-            return errors.length > 0;
+
+    function errorDirective(gwErrorFactory) {
+
+        function ErrorController($element) {
+            this.screenCtrl = nullScreenController;
+            this._errors = [];
+            this._element = $element;
+            this._ol = $("<ol>");
         }
-        this._render = function (errors) {
-            if (errors.length > 0) {
+
+        ErrorController.$injector = ["$element", "gwErrorFactory"];
+        angular.extend(ErrorController.prototype, {
+            attachError: function (errorData) {
+                var screenCtrl = this.screenCtrl;
+                var error = gwErrorFactory.createError(errorData, function (error) {
+                    screenCtrl.handleError(error);
+                });
+                this._ol.append(error.toHtml());
+            },
+            clearErrors: function (closeErrorPanel) {
+                this._errors = [];
+                this._ol.empty();
+                closeErrorPanel = closeErrorPanel === true ? true : false;
+                if (closeErrorPanel) {
+                    this.screenCtrl.closeErrorPanel();
+                }
+            },
+            hasErrors: function () {
+                return this._errors.length > 0;
+            },
+            handleErrors: function (resData) {
+                this.clearErrors();
+                var screenCtrl = this.screenCtrl;
+                var errors = this._errors = gwErrorFactory.createErrors(resData, function (error) {
+                    screenCtrl.handleError(error);
+                });
+                this._render(errors, this._element);
+                if (errors.length > 0) {
+                    screenCtrl.openErrorPanel();
+                } else {
+                    screenCtrl.closeErrorPanel();
+                }
+            },
+            _render: function (errors, parentElement) {
+                var ol = this._ol,
+                    parentElement = parentElement || this._element;
                 angular.forEach(errors, function (error) {
                     ol.append(error.toHtml());
                 });
-                $element.append(ol);
-            } else {
-                ol.empty();
-            }
-        };
-    }
+                parentElement.append(ol);
+            },
+        });
 
-    ErrorController.$injector = ["$element", "gwErrorFactory"];
-
-    function errorDirective() {
         return {
-            controller: "gwErrorController",
-            controllerAs: "gwErrorCtrl",
-            require: ["gwError", "^^gwScreen"],
-            link: function (scope, iEle, iAttr, ctrls) {
-                ctrls[1].setErrorController(ctrls[0]);
+            controller: ErrorController,
+            scope: {
+                name: "=?"
+            },
+            require: ["gwError", "^^?gwScreen"],
+            compile: function () {
+                return {
+                    pre: function (scope, iEle, iAttr, ctrls) {
+                        var gwErrorCtrl = ctrls[0],
+                            gwScreenCtrl = ctrls[1] || nullScreenController;
+                        gwScreenCtrl.setErrorController(gwErrorCtrl);
+                        scope.name = gwErrorCtrl;
+                    },
+                    post: function (scope, iEle, iAttr, ctrls) {
+
+                    }
+                }
             }
         };
     }
-    errorDirective.$injector = [];
+    errorDirective.$injector = ["gwErrorFactory"];
 
-    angular.module("gw.screen.error", ["gw.screen.error.baseError", "gw.screen.error.fieldError"])
+    angular.module("gw.screen.error", ["gw.screen.error.baseError", "gw.screen.error.fieldError", "gw.screen.error.cellError"])
         .value("GwErrorType", {
-            FIELD_ERROR: "fieldError"
+            FIELD_ERROR: "fieldError",
+            CELL_ERROR: "cellError"
         })
         .factory("gwErrorFactory", errorFactory)
-        .controller("gwErrorController", ErrorController)
         .directive("gwError", errorDirective);
 })(window.angular);

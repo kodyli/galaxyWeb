@@ -1,3 +1,7 @@
+var nullTabController = {
+    activate: angular.noop,
+    activateTabById: angular.noop
+};
 (function (angular) {
     //Mediator Design Pattern
     angular.module("gw.tab", ["gw.dialog"])
@@ -75,6 +79,14 @@
                 /**
                  * Active a tab.
                  * @public
+                 * @param {id} tab's id
+                 */
+                activateTabById: function (id) {
+                    this.activate(this.getTabById(id));
+                },
+                /**
+                 * Active a tab.
+                 * @public
                  * @param {Tab} tab
                  */
                 activate: function (tab) {
@@ -130,60 +142,69 @@
                 controllerAs: "gwTabsCtrl",
                 transclude: true,
                 template: "<ul><li ng-repeat='tab in gwTabsCtrl.tabs'><a href='#{{tab.id}}'>{{tab.title}}</a></li></ul><div ng-transclude></div>",
-                scope: {},
-                require: ["gwTabs", "^^gwContent"],
+                scope: {
+                    name: "=?"
+                },
+                require: ["gwTabs", "?^^gwContent"],
                 compile: function (tEle) {
                     tEle.css({
                         display: "block"
                     });
-                    return function (scope, iEle, iAttr, ctrls) {
-                        var gwTabsCtrl = ctrls[0];
-                        ctrls[1].setTabsController(ctrls[0]);
-                        iEle.ready(function () {
-                            gwTabsCtrl.element = iEle.tabs({
-                                disabled: gwTabsCtrl.getDisabledTabIndexes(),
-                                beforeActivate: beforeActivate,
-                                activate: activate
-                            });
-                        });
-
-                        function beforeActivate(event, ui) {
-                            var newPanelId = ui.newPanel.attr("id");
-                            var newTab = gwTabsCtrl.getTabById(newPanelId)
-                            if (!newTab.isActive && newTab.hasSaveWarning) {
-                                gwDialogFactory.dialog({
-                                    title: "Warning",
-                                    msg: "Your changes are not saved yet, do you want to switch tab?",
-                                    buttons: {
-                                        "Yes": function () {
-                                            $(this).dialog("close");
-                                            gwTabsCtrl.activate(newTab);
-                                        },
-                                        "No": function () {
-                                            $(this).dialog("close");
-                                            ui.oldTab.focus();
-                                        }
-                                    }
+                    return {
+                        pre: function (scope, iEle, iAttr, ctrls) {
+                            var gwTabsCtrl = ctrls[0];
+                            gwContentCtrl = ctrls[1] || nullContentController;
+                            gwContentCtrl.setTabsController(gwTabsCtrl);
+                            scope.name = gwTabsCtrl;
+                        },
+                        post: function (scope, iEle, iAttr, ctrls) {
+                            var gwTabsCtrl = ctrls[0];
+                            iEle.ready(function () {
+                                gwTabsCtrl.element = iEle.tabs({
+                                    disabled: gwTabsCtrl.getDisabledTabIndexes(),
+                                    beforeActivate: beforeActivate,
+                                    activate: activate
                                 });
-                                event.preventDefault();
+                            });
+
+                            function beforeActivate(event, ui) {
+                                var newPanelId = ui.newPanel.attr("id");
+                                var newTab = gwTabsCtrl.getTabById(newPanelId)
+                                if (!newTab.isActive && newTab.hasSaveWarning) {
+                                    gwDialogFactory.dialog({
+                                        title: "Warning",
+                                        msg: "Your changes are not saved yet, do you want to switch tab?",
+                                        buttons: {
+                                            "Yes": function () {
+                                                $(this).dialog("close");
+                                                gwTabsCtrl.activate(newTab);
+                                            },
+                                            "No": function () {
+                                                $(this).dialog("close");
+                                                ui.oldTab.focus();
+                                            }
+                                        }
+                                    });
+                                    event.preventDefault();
+                                }
+                            }
+
+                            function activate(event, ui) {
+                                var newTabId = ui.newPanel.attr("id");
+                                gwTabsCtrl.getTabById(newTabId).activate();
+                                var oldTabId = ui.oldPanel.attr("id");
+                                gwTabsCtrl.getTabById(oldTabId).deactivate();
                             }
                         }
-
-                        function activate(event, ui) {
-                            var newTabId = ui.newPanel.attr("id");
-                            gwTabsCtrl.getTabById(newTabId).activate();
-                            var oldTabId = ui.oldPanel.attr("id");
-                            gwTabsCtrl.getTabById(oldTabId).deactivate();
-                        }
-                    }
+                    };
                 }
             };
         }])
         .directive("gwTab", function () {
 
             function TabController($scope) {
-                this.id = $scope.tabId;
-                this.title = $scope.tabTitle;
+                this.id = $scope.id;
+                this.title = $scope.title;
                 this.isDisabled = true; //is this tab disabled
                 this.isActive = false; //is this tab currently open
                 this.hasSaveWarning = false;
@@ -220,7 +241,6 @@
                             obj.handler.apply(obj.context, arguments);
                         });
                     }
-
                 },
                 /**
                  * Bind an event handler to the "deactivate" event, or tigger the events.
@@ -248,7 +268,7 @@
                 enableSiblings: function () {
                     var self = this;
                     self.gwTabsCtrl.enableSiblings(self);
-                    return function (tabId) {
+                    return function activeSibling(tabId) {
                         var gwTabsCtrl = self.gwTabsCtrl;
                         gwTabsCtrl.activate(gwTabsCtrl.getTabById(tabId));
                     };
@@ -262,9 +282,9 @@
                 restrict: "E",
                 transclude: true,
                 scope: {
-                    tabId: '@',
-                    tabTitle: '@',
-                    tabController: '=?'
+                    id: '@',
+                    title: '@',
+                    name: '=?'
                 },
                 controller: TabController,
                 controllerAs: 'gwTabCtrl',
@@ -274,10 +294,14 @@
                         display: "block"
                     });
                     return {
-                        pre: function () {},
-                        post: function (scope, iEle, iAttr, ctrls) {
+                        pre: function (scope, iEle, iAttr, ctrls) {
                             var gwTabCtrl = ctrls[0],
                                 gwTabsCtrl = ctrls[1];
+                            gwTabsCtrl.attach(gwTabCtrl);
+                            scope.name = gwTabCtrl;
+                        },
+                        post: function (scope, iEle, iAttr, ctrls) {
+                            var gwTabCtrl = ctrls[0];
                             if (iAttr.hasOwnProperty("enable")) {
                                 gwTabCtrl.isDisabled = false;
                             }
@@ -294,8 +318,6 @@
                             if (iAttr.hasOwnProperty("saveWarning")) {
                                 gwTabCtrl.hasSaveWarning = true;
                             }
-                            scope.tabController = gwTabCtrl;
-                            gwTabsCtrl.attach(gwTabCtrl);
                         }
                     }
                 }

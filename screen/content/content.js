@@ -1,46 +1,69 @@
+//global --nullContentController
+var nullContentController = {
+    setTabsController: angular.noop,
+    attachGridController: angular.noop
+};
+
 (function (angular) {
-    function ContentController($scope, $element) {
-        var tabsCtrl = null,
-            screenCtrl = null;
-        this.setTabsController = function (tabsController) {
-            tabsCtrl = tabsController;
-        };
-        this.setScreenController = function (screenController) {
-            screenCtrl = screenController;
-        };
-        this.attachError = function (error) {
-            screenCtrl.attachError(error);
-        };
-        this.handleError = function (error) {
-            error.display(this);
-        };
-        this.getElement = function () {
-            return $element;
-        };
-        this.hasTabs = function () {
-            return tabsCtrl !== null;
-        }
-
-        this.activateTabById = function (tabId) {
-            var tab = tabsCtrl.getTabById(tabId);
-            tabsCtrl.activate(tab);
-        }
-    }
-    ContentController.$injector = ["$scope", "$element"];
-
     function contentDirective() {
+        function ContentController($element) {
+            this.screenCtrl = nullScreenController;
+            this.element = $element;
+            this._tabsCtrl = nullTabController;
+            this._gridCtrls = [];
+        }
+        ContentController.$injector = ["$element"];
+        angular.extend(ContentController.prototype, {
+            setTabsController: function (tabsController) {
+                this._tabsCtrl = tabsController;
+            },
+            attachGridController: function (gwGridController) {
+                this._gridCtrls.push(gwGridController);
+            },
+            getGridById: function (id) {
+                var currentGrid = null;
+                this._gridCtrls.every(function (grid) {
+                    if (grid.id === id) {
+                        currentGrid = grid;
+                        return false;
+                    }
+                    return true;
+                });
+                return currentGrid;
+            },
+            attachError: function (error) {
+                this.screenCtrl.attachError(error);
+            },
+            displayError: function (error) {
+                var self = this;
+                this._tabsCtrl.activateTabById(error.tabId);
+                error.display(this);
+            }
+        });
         return {
             restrict: "E",
-            controller: "gwContentController",
-            require: ["gwContent", "^^gwScreen"],
-            link: function (scope, iEle, iAttr, ctrls) {
-                ctrls[1].setContentController(ctrls[0]);
+            controller: ContentController,
+            require: ["gwContent", "^^?gwScreen"],
+            scope: {
+                name: "=?"
+            },
+            compile: function () {
+                return {
+                    pre: function (scope, iEle, iAttr, ctrls) {
+                        var gwContentCtrl = ctrls[0],
+                            gwScreenCtrl = ctrls[1] || gwContentCtrl.screenCtrl;
+                        gwScreenCtrl.setContentController(gwContentCtrl);
+                        scope.name = gwContentCtrl;
+                    },
+                    post: function (scope, iEle, iAttr, ctrls) {
+
+                    }
+                };
             }
         };
     }
     contentDirective.$injector = [];
 
-    angular.module("gw.screen.content", ["gw.grid"])
-        .controller("gwContentController", ContentController)
+    angular.module("gw.screen.content", ["gw.grid", "gw.tab"])
         .directive("gwContent", contentDirective);
 })(window.angular);

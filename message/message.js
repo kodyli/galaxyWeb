@@ -1,19 +1,32 @@
 (function (angular) {
     angular.module("gw.message", [])
-        .service("gwMessageService", function () {
-
-        })
-        .controller("gwMessageController", ["$scope", "$compile", "$element", function ($scope, $compile, $element) {
-            var self = this;
-            self.render = function (tElement) {
-
-            }
-	}])
         .directive("gwMessage", function () {
+            function MessageController() {
+                this.appCtrl = nullAppController;
+            }
+            angular.extend(MessageController.prototype, {
+
+            });
             return {
-                controller: "gwMessageController",
-                controllerAs: "gwMessageCtrl",
+                restrict: "E",
+                require: ["gwMessage", "^^?gwApp"],
+                controller: MessageController,
+                scope: {
+                    name: "=?"
+                },
+                compile: function () {
+                    return {
+                        pre: function (scope, iEle, iAttr, ctrls) {
+                            var gwMessageCtrl = ctrls[0],
+                                gwAppCtrl = ctrls[1] || gwMessageCtrl.appCtrl;
+                            gwAppCtrl.setMessageController(gwMessageCtrl);
+                            scope.name = gwMessageCtrl;
+                        },
+                        post: function (scope, iEle, iAttr, ctrls) {
+
+                        }
+                    };
+                }
             };
         });
-
 })(window.angular);

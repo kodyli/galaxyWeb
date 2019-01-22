@@ -6,9 +6,9 @@
             var dialogScope;
             this.name = "test";
             this.find = function () {
-                $scope.gwErrorCtrl.clearErrors(true);
+                this.gwErrorCtrl.clearErrors(true);
                 if (this.name === "error") {
-                    $scope.gwErrorCtrl.handleErrors([{
+                    this.gwErrorCtrl.handleErrors([{
                         tabId: "searchTab",
                         ngModel: "name",
                         errorType: 'fieldError',
@@ -19,27 +19,33 @@
                 }
             };
             this.save = function () {
-                $scope.gwErrorCtrl.clearErrors(true);
+                this.gwErrorCtrl.clearErrors(true);
                 var errors = [];
                 if (this.firstName === "error") {
                     errors.push({
+                        errorType: 'fieldError',
                         tabId: 'detailsTab',
                         ngModel: 'firstName',
-                        errorType: 'fieldError',
                         message: "Field Error"
+                    }, {
+                        errorType: 'cellError',
+                        tabId: "detailsTab",
+                        gridId: "gwGrid1",
+                        rowId: 1,
+                        colName: "CustomerID",
+                        message: "Can not be empty"
                     });
 
                 }
                 if (this.lastName === "error") {
                     errors.push({
+                        errorType: 'fieldError',
                         tabId: 'noteTab',
                         ngModel: 'lastName',
-                        errorType: 'fieldError',
                         message: "Field Error"
                     });
-
                 }
-                $scope.gwErrorCtrl.handleErrors(errors);
+                this.gwErrorCtrl.handleErrors(errors);
             };
             this.addRow1 = function () {
                 this.grid1.addRow({
@@ -65,20 +71,7 @@
                 });
             };
             this.closDialog = function () {
-                    dialog.empty().dialog("destroy");
-                    //dialogScope.$destroy();
-                }
-                /*this.saveInvoice = function () {
-                    if (this.name === "error") {
-                        var errorsHandler = errorService.getDialogErrorsHandler(dialogScope);
-                        errorsHandler([{
-                            ngModel: 'name',
-                            errorType: 'fieldError',
-                            message: "Field Error"
-                        }]);
-                    } else {
-                        this.closDialog();
-                    }
-                }*/
+                dialog.empty().dialog("destroy");
+            }
         }]);
 })(window.angular);
