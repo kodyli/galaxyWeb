@@ -6,13 +6,13 @@ var nullContentController = {
 
 (function (angular) {
     function contentDirective() {
-        function ContentController($element) {
+        function ContentController() {
             this.screenCtrl = nullScreenController;
-            this.element = $element;
+            this.element = null;
             this._tabsCtrl = nullTabController;
             this._gridCtrls = [];
         }
-        ContentController.$injector = ["$element"];
+        ContentController.$injector = [];
         angular.extend(ContentController.prototype, {
             setTabsController: function (tabsController) {
                 this._tabsCtrl = tabsController;
@@ -52,6 +52,7 @@ var nullContentController = {
                     pre: function (scope, iEle, iAttr, ctrls) {
                         var gwContentCtrl = ctrls[0],
                             gwScreenCtrl = ctrls[1] || gwContentCtrl.screenCtrl;
+                        gwContentCtrl.element = iEle;
                         gwScreenCtrl.setContentController(gwContentCtrl);
                         scope.name = gwContentCtrl;
                     },

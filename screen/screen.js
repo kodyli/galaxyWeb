@@ -43,8 +43,8 @@ var nullScreenController = {
             }
         });
 
-
         ScreenController.$injector = [];
+
         return {
             controller: ScreenController,
             compile: function (tEle, tAttr) {

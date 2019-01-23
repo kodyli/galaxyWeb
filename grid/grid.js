@@ -25,16 +25,16 @@
             }
 
             function selectCell(gridEle, rowId, colName) {
-                var iRow = getRowIndex(gridEle, rowId);
-                var iCol = getColumnIndex(gridEle, colName);
-                console.log(gridEle.editCell(iRow, iCol, true));
+                var iRow = _getRowIndex(gridEle, rowId);
+                var iCol = _getColumnIndex(gridEle, colName);
+                gridEle.editCell(iRow, iCol, true);
             }
 
-            function getRowIndex(gridEle, rowId) {
+            function _getRowIndex(gridEle, rowId) {
                 return gridEle.getInd(rowId);
             }
 
-            function getColumnIndex(gridEle, colName) {
+            function _getColumnIndex(gridEle, colName) {
                 var colModel = gridEle.getGridParam("colModel"),
                     index = 0;
                 colModel.every(function (column, i) {
@@ -49,29 +49,26 @@
         })
         .directive("gwGrid", ["gwGridService", function (gwGridService) {
             function GwGridController($scope) {
-                this._grid = null;
+                this.gridElement = null;
                 this.id = $scope.id;
             }
             angular.extend(GwGridController.prototype, {
                 init: function () {
                     console.log("init");
                 },
-                setGrid: function (grid) {
-                    this._grid = grid;
-                },
                 addRow: function (rowData) {
                     var rowId = this._getLastRowId() + 1;
-                    var result = gwGridService.addRowToBottom(this._grid, rowId, rowData);
+                    var result = gwGridService.addRowToBottom(this.gridElement, rowId, rowData);
                     if (result) {
-                        gwGridService.selectRowById(this._grid, rowId);
+                        gwGridService.selectRowById(this.gridElement, rowId);
                     }
                     return result;
                 },
                 selectCell: function (rowId, colName) {
-                    gwGridService.selectCell(this._grid, rowId, colName);
+                    gwGridService.selectCell(this.gridElement, rowId, colName);
                 },
                 _getLastRowId: function () {
-                    var rowIds = gwGridService.getRowIds(this._grid);
+                    var rowIds = gwGridService.getRowIds(this.gridElement);
                     if (rowIds.length > 0) {
                         var max = rowIds.reduce(function (a, b) {
                             return Math.max(parseInt(a), parseInt(b));
@@ -110,7 +107,7 @@
                         post: function (scope, iEle, iAttr, ctrls) {
                             var gwGridCtrl = ctrls[0];
                             iEle.ready(function () {
-                                var grid = iEle.children("table").filter(":first").jqGrid({
+                                gwGridCtrl.gridElement = iEle.children("table").filter(":first").jqGrid({
                                     url: 'http://trirand.com/blog/phpjqgrid/examples/jsonp/getjsonp.php?callback=?&qwery=longorders',
                                     mtype: "GET",
                                     datatype: "jsonp",
@@ -154,7 +151,7 @@
                                     scrollrows: true,
                                     height: 200
                                 });
-                                gwGridCtrl.setGrid(grid);
+
                             });
                         }
                     };

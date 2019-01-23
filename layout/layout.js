@@ -16,18 +16,15 @@
         })
         .directive("gwLayout", ["gwLayoutService", function (gwLayoutService) {
             function LayoutController() {
-                this._layout = null;
+                this.element = null;
             }
             LayoutController.$injector = [];
             angular.extend(LayoutController.prototype, {
-                setLayout: function (layoutEle) {
-                    this._layout = layoutEle;
-                },
                 closeErrorPanel: function () {
-                    gwLayoutService.closeErrorPanel(this._layout);
+                    gwLayoutService.closeErrorPanel(this.element);
                 },
                 openErrorPanel: function () {
-                    gwLayoutService.openErrorPanel(this._layout);
+                    gwLayoutService.openErrorPanel(this.element);
                 }
             });
             return {
@@ -55,7 +52,7 @@
                         post: function (scope, iEle, iAttr, ctrls) {
                             var gwLayoutCtrl = ctrls[0];
                             iEle.ready(function () {
-                                gwLayoutCtrl.setLayout(iEle.layout({
+                                gwLayoutCtrl.element = iEle.layout({
                                     applyDemoStyles: true,
                                     north: {
                                         size: 95,
@@ -71,7 +68,7 @@
                                         spacing_open: 15,
                                         spacing_closed: 15
                                     }
-                                }));
+                                });
                             });
                         }
                     };
