@@ -28,6 +28,7 @@
                 var iRow = _getRowIndex(gridEle, rowId);
                 var iCol = _getColumnIndex(gridEle, colName);
                 gridEle.editCell(iRow, iCol, true);
+                gridEle.setCell(rowId, colName, '', 'test');
             }
 
             function _getRowIndex(gridEle, rowId) {
@@ -47,7 +48,7 @@
                 return index;
             }
         })
-        .directive("gwGrid", ["gwGridService", function (gwGridService) {
+        .directive("gwGrid", ["$compile", "gwGridService", function ($compile, gwGridService) {
             function GwGridController($scope) {
                 this.gridElement = null;
                 this.id = $scope.id;
@@ -90,7 +91,7 @@
                 controller: GwGridController,
                 controllerAs: "gwGridCtrl",
                 require: ["gwGrid", "?^^gwTab", "^^?gwContent"],
-                template: "<table></table>",
+                template: "<table id='{{gwGridCtrl.id}}'></table>",
                 compile: function (tEle, tAttr) {
                     tEle.css({
                         display: "block"
@@ -99,7 +100,7 @@
                         pre: function (scope, iEle, iAttr, ctrls) {
                             var gwGridCtrl = ctrls[0],
                                 gwTabCtrl = ctrls[1] || nullTabController,
-                                gwContentCtrl = ctrls[2];
+                                gwContentCtrl = ctrls[2] || nullContentController;
                             gwTabCtrl.activate(gwGridCtrl.init, gwGridCtrl);
                             gwContentCtrl.attachGridController(gwGridCtrl);
                             scope.name = gwGridCtrl;
@@ -149,7 +150,12 @@
                 ],
                                     viewrecords: true,
                                     scrollrows: true,
-                                    height: 200
+                                    height: 200,
+                                    subGrid: true,
+                                    subGridRowExpanded: function (subgridId, rowId) {
+                                        var template = "<gw-grid id='" + subgridId + "_subgrid" + "'></gw-grid>";
+                                        $("#" + subgridId).html($compile(template)(scope));
+                                    }
                                 });
 
                             });
