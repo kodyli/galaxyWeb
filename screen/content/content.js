@@ -10,7 +10,7 @@ var nullContentController = {
             this.screenCtrl = nullScreenController;
             this.element = null;
             this._tabsCtrl = nullTabController;
-            this._gridCtrls = [];
+            this._gridCtrls = {};
         }
         ContentController.$injector = [];
         angular.extend(ContentController.prototype, {
@@ -18,18 +18,11 @@ var nullContentController = {
                 this._tabsCtrl = tabsController;
             },
             attachGridController: function (gwGridController) {
-                this._gridCtrls.push(gwGridController);
+                gwGridController.contentCtrl = this;
+                this._gridCtrls[gwGridController.id] = gwGridController;
             },
             getGridById: function (id) {
-                var currentGrid = null;
-                this._gridCtrls.every(function (grid) {
-                    if (grid.id === id) {
-                        currentGrid = grid;
-                        return false;
-                    }
-                    return true;
-                });
-                return currentGrid;
+                return this._gridCtrls[id];
             },
             attachError: function (error) {
                 this.screenCtrl.attachError(error);

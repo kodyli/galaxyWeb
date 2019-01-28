@@ -11,6 +11,7 @@
             contructor: CellError,
             display: function (gwContentCtrl) {
                 var grid = gwContentCtrl.getGridById(this.gridId);
+                grid.expand();
                 grid.selectCell(this.rowId, this.colName);
             }
         });

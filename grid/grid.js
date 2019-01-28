@@ -1,3 +1,6 @@
+var nullGridController = {
+    attach: angular.noop
+};
 (function (angular) {
     angular.module("gw.grid", [])
         .factory("gwGridService", function () {
@@ -9,7 +12,9 @@
                 addRowToBottom: addRowToBottom,
                 selectRowById: selectRowById,
                 getRowIds: getRowIds,
-                selectCell: selectCell
+                selectCell: selectCell,
+                expandSubGridByRowId: expandSubGridRow,
+                collapseSubGridByRowId: collapseSubGridRow
             };
 
             function addRowToBottom(gridEle, rowId, rowData) {
@@ -29,6 +34,14 @@
                 var iCol = _getColumnIndex(gridEle, colName);
                 gridEle.editCell(iRow, iCol, true);
                 gridEle.setCell(rowId, colName, '', 'test');
+            }
+
+            function expandSubGridRow(gridEle, parentRowId) {
+                gridEle.expandSubGridRow(parentRowId);
+            }
+
+            function collapseSubGridRow(gridEle, parentRowId) {
+                gridEle.collapseSubGridRow(parentRowId);
             }
 
             function _getRowIndex(gridEle, rowId) {
@@ -52,6 +65,11 @@
             function GwGridController($scope) {
                 this.gridElement = null;
                 this.id = $scope.id;
+                this.parent = null;
+                this.parentRowId = null;
+                this.childGrids = [];
+                this.isExpanded = false;
+                this.contentCtrl = nullContentController;
             }
             angular.extend(GwGridController.prototype, {
                 init: function () {
@@ -67,6 +85,55 @@
                 },
                 selectCell: function (rowId, colName) {
                     gwGridService.selectCell(this.gridElement, rowId, colName);
+                },
+                attach: function (childGrid, parentRowId) {
+                    childGrid.parent = this;
+                    childGrid.parentRowId = parentRowId;
+                    childGrid.isExpanded = true;
+                    this.childGrids.push(childGrid);
+                    this.contentCtrl.attachGridController(childGrid);
+                },
+                getSubgrid: function (id) {
+                    var current = null;
+                    this.childGrids.every(function (subgrid) {
+                        if (subgrid.id === id) {
+                            current = subgrid;
+                            return false;
+                        }
+                        return true;
+                    });
+                    return current;
+                },
+                isSubgrid: function () {
+                    return this.parent !== null;
+                },
+                expand: function (isOnClick) {
+                    if (this.isSubgrid() && !this.isExpanded) {
+                        this.isExpanded = true;
+                        if (!isOnClick) {
+                            this.parent.expandSubGridByRowId(this.parentRowId);
+                        }
+                    }
+                },
+                expandSubGridByRowId: function (rowId) {
+                    this.expand();
+                    gwGridService.expandSubGridByRowId(this.gridElement, rowId);
+                },
+                collapse: function (isOnClick) {
+                    if (this.isSubgrid() && this.isExpanded) {
+                        if (this.childGrids.length > 0) {
+                            this.childGrids.forEach(function (subgrid) {
+                                subgrid.collapse();
+                            });
+                        }
+                        this.isExpanded = false;
+                        if (!isOnClick) {
+                            this.parent.collapseSubGridByRowId(this.parentRowId);
+                        }
+                    }
+                },
+                collapseSubGridByRowId: function (rowId) {
+                    gwGridService.collapseSubGridByRowId(this.gridElement, rowId);
                 },
                 _getLastRowId: function () {
                     var rowIds = gwGridService.getRowIds(this.gridElement);
@@ -86,12 +153,14 @@
                 restrict: "E",
                 scope: {
                     id: "@",
-                    name: "=?"
+                    name: "=?",
+                    parent: "<?",
+                    parentRowId: "@?"
                 },
                 controller: GwGridController,
                 controllerAs: "gwGridCtrl",
                 require: ["gwGrid", "?^^gwTab", "^^?gwContent"],
-                template: "<table id='{{gwGridCtrl.id}}'></table>",
+                template: "<table id='{{gwGridCtrl.id}}_table'></table>",
                 compile: function (tEle, tAttr) {
                     tEle.css({
                         display: "block"
@@ -101,12 +170,20 @@
                             var gwGridCtrl = ctrls[0],
                                 gwTabCtrl = ctrls[1] || nullTabController,
                                 gwContentCtrl = ctrls[2] || nullContentController;
-                            gwTabCtrl.activate(gwGridCtrl.init, gwGridCtrl);
+                            scope.parent = scope.parent || nullGridController;
+                            gwTabCtrl.activate(function () {
+                                gwGridCtrl.init();
+                            });
                             gwContentCtrl.attachGridController(gwGridCtrl);
                             scope.name = gwGridCtrl;
+                            scope.parent.attach(gwGridCtrl, scope.parentRowId);
                         },
                         post: function (scope, iEle, iAttr, ctrls) {
                             var gwGridCtrl = ctrls[0];
+
+                            function toSubgridId(subgridContainerId) {
+                                return subgridContainerId.replace("_table", "") + "_subgrid";
+                            }
                             iEle.ready(function () {
                                 gwGridCtrl.gridElement = iEle.children("table").filter(":first").jqGrid({
                                     url: 'http://trirand.com/blog/phpjqgrid/examples/jsonp/getjsonp.php?callback=?&qwery=longorders',
@@ -150,14 +227,30 @@
                 ],
                                     viewrecords: true,
                                     scrollrows: true,
-                                    height: 200,
+                                    height: 400,
                                     subGrid: true,
-                                    subGridRowExpanded: function (subgridId, rowId) {
-                                        var template = "<gw-grid id='" + subgridId + "_subgrid" + "'></gw-grid>";
-                                        $("#" + subgridId).html($compile(template)(scope));
+                                    subGridOptions: {
+                                        reloadOnExpand: false
+                                    },
+                                    subGridBeforeExpand: function (subgridContainerId, rowId) {
+                                        var subgridId = toSubgridId(subgridContainerId);
+                                        var subgrid = gwGridCtrl.getSubgrid(subgridId);
+                                        if (subgrid) {
+                                            subgrid.expand(true);
+                                        }
+                                    },
+                                    subGridRowExpanded: function (subgridContainerId, rowId) {
+                                        var subgridId = toSubgridId(subgridContainerId),
+                                            template = "<gw-grid id='" + subgridId + "' parent='gwGridCtrl' parent-row-id='" + rowId + "'></gw-grid>",
+                                            element = $compile(template)(scope);
+                                        $("#" + subgridContainerId).html(element);
+                                    },
+                                    subGridRowColapsed: function (subgridContainerId, rowId) {
+                                        var subgridId = toSubgridId(subgridContainerId);
+                                        var subgrid = gwGridCtrl.getSubgrid(subgridId);
+                                        subgrid.collapse(true);
                                     }
                                 });
-
                             });
                         }
                     };

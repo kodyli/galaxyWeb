@@ -30,7 +30,7 @@
                     }, {
                         errorType: 'cellError',
                         tabId: "detailsTab",
-                        gridId: "gwGrid1",
+                        gridId: "gwGrid1_1_subgrid_1_subgrid",
                         rowId: 1,
                         colName: "CustomerID",
                         message: "Can not be empty"
