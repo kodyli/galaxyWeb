@@ -11,10 +11,12 @@ var nullGridController = {
             return {
                 addRowToBottom: addRowToBottom,
                 selectRowById: selectRowById,
+                unselectRow: unselectRow,
                 getRowIds: getRowIds,
                 selectCell: selectCell,
                 expandSubGridByRowId: expandSubGridRow,
-                collapseSubGridByRowId: collapseSubGridRow
+                collapseSubGridByRowId: collapseSubGridRow,
+
             };
 
             function addRowToBottom(gridEle, rowId, rowData) {
@@ -23,6 +25,10 @@ var nullGridController = {
 
             function selectRowById(gridEle, rowId) {
                 gridEle.setSelection(rowId);
+            }
+
+            function unselectRow(gridEle) {
+                gridEle.resetSelection();
             }
 
             function getRowIds(gridEle) {
@@ -70,18 +76,24 @@ var nullGridController = {
                 this.childGrids = [];
                 this.isExpanded = false;
                 this.contentCtrl = nullContentController;
+                this._currentSelectedRowId = null;
+                this._currentSelectedGrid = null; //only avaliable for top grid;
             }
             angular.extend(GwGridController.prototype, {
                 init: function () {
                     console.log("init");
                 },
                 addRow: function (rowData) {
-                    var rowId = this._getLastRowId() + 1;
-                    var result = gwGridService.addRowToBottom(this.gridElement, rowId, rowData);
-                    if (result) {
-                        gwGridService.selectRowById(this.gridElement, rowId);
+                    var selectedGrid = this._currentSelectedGrid ? this._currentSelectedGrid : this;
+                    if (selectedGrid.isSubgrid() && !selectedGrid.isExpanded) {
+                        selectedGrid.expand();
                     }
-                    return result;
+                    var rowId = selectedGrid._getLastRowId() + 1;
+                    var result = gwGridService.addRowToBottom(selectedGrid.gridElement, rowId, rowData);
+                    if (result) {
+                        gwGridService.selectRowById(selectedGrid.gridElement, rowId);
+                        this._applyNewRowStyle(rowId);
+                    }
                 },
                 selectCell: function (rowId, colName) {
                     gwGridService.selectCell(this.gridElement, rowId, colName);
@@ -135,6 +147,16 @@ var nullGridController = {
                 collapseSubGridByRowId: function (rowId) {
                     gwGridService.collapseSubGridByRowId(this.gridElement, rowId);
                 },
+                unselectRow: function () {
+                    var currentGrid = this;
+                    while (currentGrid.parent) {
+                        currentGrid = currentGrid.parent;
+                    }
+                    if (currentGrid._currentSelectedGrid) {
+                        gwGridService.unselectRow(currentGrid._currentSelectedGrid.gridElement);
+                    }
+                    currentGrid._currentSelectedGrid = currentGrid === this ? null : this;
+                },
                 _getLastRowId: function () {
                     var rowIds = gwGridService.getRowIds(this.gridElement);
                     if (rowIds.length > 0) {
@@ -144,6 +166,11 @@ var nullGridController = {
                         return max;
                     }
                     return 0;
+                },
+                _applyNewRowStyle: function (rowId) {
+                    var tbody = this.gridElement.children("tbody").filter(":first");
+                    var newRow = tbody.children("tr.jqgrow[id='" + rowId + "']").filter(":first");
+                    newRow.removeClass("ui-state-highlight").addClass("gw-grid-new-row");
                 }
             });
 
@@ -249,6 +276,11 @@ var nullGridController = {
                                         var subgridId = toSubgridId(subgridContainerId);
                                         var subgrid = gwGridCtrl.getSubgrid(subgridId);
                                         subgrid.collapse(true);
+                                    },
+                                    beforeSelectRow: function (rowId, e) {
+                                        gwGridCtrl.unselectRow();
+                                        gwGridCtrl._currentSelectedRowId = rowId;
+                                        return true;
                                     }
                                 });
                             });
@@ -256,5 +288,5 @@ var nullGridController = {
                     };
                 }
             };
-        }]);
+            }]);
 })(window.angular);

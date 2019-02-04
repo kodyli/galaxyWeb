@@ -238,7 +238,7 @@ var nullTabController = {
                         });
                     } else {
                         this._activatedHandlers.forEach(function (obj) {
-                            obj.handler.apply(obj.context, arguments);
+                            obj.handler.apply(obj.context);
                         });
                     }
                 },
@@ -301,7 +301,8 @@ var nullTabController = {
                             scope.name = gwTabCtrl;
                         },
                         post: function (scope, iEle, iAttr, ctrls) {
-                            var gwTabCtrl = ctrls[0];
+                            var gwTabCtrl = ctrls[0],
+                                gwTabsCtrl = ctrls[1];
                             if (iAttr.hasOwnProperty("enable")) {
                                 gwTabCtrl.isDisabled = false;
                             }

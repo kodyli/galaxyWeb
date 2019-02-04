@@ -1,0 +1,7 @@
+.gw-grid-new-row {
+    background-color: forestgreen;
+}
+
+.gw-grid-new-row.selected-row {
+    background-color: chartreuse;
+}
