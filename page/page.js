@@ -29,7 +29,12 @@
                 }
                 this._pageScope = this._scope.$new(true, this._scope);
                 var iElement = $compile(pageHtml)(this._pageScope);
-                parentElement.empty().append(iElement);
+                parentElement.html(iElement);
+                /**
+                 * Micro Frontend, how to make it work?
+                 * angular.bootstrap(pageHtml, ["gw.test"]);
+                 * parentElement.empty().append(pageHtml);
+                 */
             }
         });
         return {

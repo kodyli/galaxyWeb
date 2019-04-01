@@ -25,6 +25,9 @@ var nullScreenController = {
                 this._contentCtrl = gwContentController;
                 this._contentCtrl.screenCtrl = this;
             },
+            getContentController:function(){
+                return this._contentCtrl;
+            },
             setErrorController: function (gwErrorController) {
                 this._errorCtrl = gwErrorController;
                 this._errorCtrl.screenCtrl = this;

@@ -3,7 +3,6 @@ var nullTabController = {
     activateTabById: angular.noop
 };
 (function (angular) {
-    //Mediator Design Pattern
     angular.module("gw.tab", ["gw.dialog"])
         .factory("gwTabsService", function () {
             /**
@@ -39,6 +38,9 @@ var nullTabController = {
             }
         })
         .directive("gwTabs", ["gwTabsService", "gwDialogFactory", function (gwTabsService, gwDialogFactory) {
+            /**
+             * Mediator Design Pattern
+             */
             function TabsController() {
                 this.element = null;
                 this.tabs = [];

@@ -1,8 +1,15 @@
 //global --nullContentController
 var nullContentController = {
-    setTabsController: angular.noop,
-    attachGridController: angular.noop
-};
+        setTabsController: angular.noop,
+        attachGridController: angular.noop,
+        attachFormController: angular.noop
+    },
+    editable = {
+        isDirty: function () {
+            throw "editable isDirty override";
+        }
+    };
+
 
 (function (angular) {
     function contentDirective() {
@@ -11,6 +18,7 @@ var nullContentController = {
             this.element = null;
             this._tabsCtrl = nullTabController;
             this._gridCtrls = {};
+            this._formCtrls = [];
         }
         ContentController.$injector = [];
         angular.extend(ContentController.prototype, {
@@ -21,16 +29,43 @@ var nullContentController = {
                 gwGridController.contentCtrl = this;
                 this._gridCtrls[gwGridController.id] = gwGridController;
             },
+            attachFormController: function (gwFormController) {
+                gwFormController.contentCtrl = this;
+                this._formCtrls.push(gwFormController);
+            },
             getGridById: function (id) {
                 return this._gridCtrls[id];
             },
-            attachError: function (error) {
-                this.screenCtrl.attachError(error);
+            attachError: function (errorData) {
+                this.screenCtrl.attachError(errorData);
             },
-            displayError: function (error) {
-                var self = this;
-                this._tabsCtrl.activateTabById(error.tabId);
-                error.display(this);
+            activateTabById: function (tabId) {
+                this._tabsCtrl.activateTabById(tabId);
+            },
+            disableSaveButton: function () {
+                return !this._isDirty();
+            },
+            disablePrintButton: function () {
+                return this._isDirty();
+            },
+            _isDirty: function () {
+                var dirty = false;
+                this._formCtrls.every(function (formCtrl) {
+                    dirty = formCtrl.isDirty();
+                    return !dirty;
+                });
+                if (!dirty) {
+                    var id;
+                    var gridCtrl;
+                    for (id in this._gridCtrls) {
+                        gridCtrl = this._gridCtrls[id];
+                        dirty = gridCtrl.isDirty();
+                        if (dirty) {
+                            break;
+                        }
+                    }
+                }
+                return dirty;
             }
         });
         return {
@@ -58,6 +93,6 @@ var nullContentController = {
     }
     contentDirective.$injector = [];
 
-    angular.module("gw.screen.content", ["gw.grid", "gw.tab"])
+    angular.module("gw.screen.content", ["gw.tab", "gw.form", "gw.grid"])
         .directive("gwContent", contentDirective);
 })(window.angular);

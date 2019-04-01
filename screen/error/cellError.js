@@ -1,24 +1,19 @@
 (function (angular) {
     function cellErrorFactor(GwError) {
-        function CellError(data, errorHandler, context) {
+        function CellError(data, errorHandler) {
             GwError.apply(this, arguments);
-            this.gridId = data.gridId;
+            this.grid = this.contentCtrl.getGridById(data.gridId);
             this.rowId = data.rowId;
             this.colName = data.colName;
         }
 
         CellError.prototype = GwError.createSubClass({
-            contructor: CellError,
-            display: function (gwContentCtrl) {
-                var grid = gwContentCtrl.getGridById(this.gridId);
-                grid.expand();
-                grid.selectCell(this.rowId, this.colName);
-            }
+            contructor: CellError
         });
 
         return {
-            create: function (data, errorHandler, context) {
-                return new CellError(data, errorHandler, context);
+            create: function (data, errorHandler) {
+                return new CellError(data, errorHandler);
             }
         };
     }

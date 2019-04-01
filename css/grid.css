@@ -5,3 +5,10 @@
 .gw-grid-new-row.selected-row {
     background-color: chartreuse;
 }
+
+.ui-jqgrid td input,
+.ui-jqgrid td select,
+.ui-jqgrid td textarea {
+    padding-top: 0px;
+    padding-bottom: 0px;
+}

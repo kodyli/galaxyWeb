@@ -1,32 +1,41 @@
 (function (angular) {
-
-
-    function errorFactory(GwErrorType, gwBaseErrorFactor, gwFieldErrorFactor, gwCellErrorFactor) {
+    function errorFactory(GwErrorType, gwBaseErrorFactor, gwBaseErrorHandlerFactor, gwFieldErrorFactor, gwFieldErrorHandlerFactor, gwCellErrorFactor, gwCellErrorHandlerFactor, gwRowErrorFactor, gwRowErrorHandlerFactor) {
         return {
             createError: createError,
             createErrors: createErrors
         };
-
-        function createError(errorData, errorHandler, context) {
+        /**
+         * Simple Factory Design Pattern
+         */
+        function createError(errorData, gwContentCtrl) {
+            errorData.contentCtrl= gwContentCtrl;
             var error = null;
+            var errorHandler = null;
             switch (errorData.errorType) {
                 case GwErrorType.FIELD_ERROR:
-                    error = gwFieldErrorFactor.create(errorData, errorHandler, context);
+                    errorHandler = gwFieldErrorHandlerFactor.create();
+                    error = gwFieldErrorFactor.create(errorData, errorHandler);
                     break;
                 case GwErrorType.CELL_ERROR:
-                    error = gwCellErrorFactor.create(errorData, errorHandler, context);
+                    errorHandler = gwCellErrorHandlerFactor.create();
+                    error = gwCellErrorFactor.create(errorData, errorHandler);
+                    break;
+                case GwErrorType.ROW_ERROR:
+                    errorHandler = gwRowErrorHandlerFactor.create();
+                    error = gwRowErrorFactor.create(errorData, errorHandler);
                     break;
                 default:
-                    error = gwBaseErrorFactor.create(errorData, errorHandler, context);
+                    errorHandler = gwBaseErrorHandlerFactor.create();
+                    error = gwBaseErrorFactor.create(errorData, errorHandler);
             }
             return error;
         }
 
-        function createErrors(resData, errorHandler, context) {
+        function createErrors(resData, gwContentCtrl) {
             var errors = [];
             angular.forEach(resData, function (errorData) {
                 if (errorData) {
-                    errors.push(createError(errorData, errorHandler, context));
+                    errors.push(createError(errorData, gwContentCtrl));
                 } else {
                     throw "Invalid Error Data."
                 }
@@ -34,7 +43,7 @@
             return errors;
         }
     }
-    errorFactory.$injector = ["GwErrorType", "gwBaseErrorFactor", "gwFieldErrorFactor", "gwCellErrorFactor"];
+    errorFactory.$injector = ["GwErrorType", "gwBaseErrorFactor", "gwBaseErrorHandlerFactor", "gwFieldErrorFactor", "gwFieldErrorHandlerFactor", "gwCellErrorFactor", "gwCellErrorHandlerFactor"];
 
 
 
@@ -70,9 +79,7 @@
             handleErrors: function (resData) {
                 this.clearErrors();
                 var screenCtrl = this.screenCtrl;
-                var errors = this._errors = gwErrorFactory.createErrors(resData, function (error) {
-                    screenCtrl.handleError(error);
-                });
+                var errors = this._errors = gwErrorFactory.createErrors(resData, screenCtrl.getContentController());
                 this._render(errors, this._element);
                 if (errors.length > 0) {
                     screenCtrl.openErrorPanel();
@@ -113,10 +120,11 @@
     }
     errorDirective.$injector = ["gwErrorFactory"];
 
-    angular.module("gw.screen.error", ["gw.screen.error.baseError", "gw.screen.error.fieldError", "gw.screen.error.cellError"])
+    angular.module("gw.screen.error", ["gw.screen.error.baseError", "gw.screen.error.baseErrorHandler", "gw.screen.error.fieldError", "gw.screen.error.fieldErrorHandler", "gw.screen.error.cellError", "gw.screen.error.cellErrorHandler", "gw.screen.error.rowError", "gw.screen.error.rowErrorHandler"])
         .value("GwErrorType", {
             FIELD_ERROR: "fieldError",
-            CELL_ERROR: "cellError"
+            CELL_ERROR: "cellError",
+            ROW_ERROR: "rowError"
         })
         .factory("gwErrorFactory", errorFactory)
         .directive("gwError", errorDirective);

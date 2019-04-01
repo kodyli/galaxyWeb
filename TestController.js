@@ -1,7 +1,6 @@
 (function (angular) {
     angular.module("gw.test", [])
         .controller("TestController", ["$scope", "$compile", "$element", "dialogHtml", function ($scope, $compile, $element, dialogHtml) {
-            console.log("TestScreen", $scope);
             var dialog;
             var dialogScope;
             this.name = "test";
@@ -15,7 +14,10 @@
                         message: "Field Error"
                     }]);
                 } else {
-                    this.searchTabCtrl.enableSiblings()("noteTab");
+                    this.grid1.find();
+                    this.grid2.find();
+                    var selectTabById = this.searchTabCtrl.enableSiblings();
+                    selectTabById("detailsTab");
                 }
             };
             this.save = function () {
@@ -30,8 +32,21 @@
                     }, {
                         errorType: 'cellError',
                         tabId: "detailsTab",
-                        gridId: "gwGrid1_1_subgrid_1_subgrid",
+                        gridId: "gwGrid1",
                         rowId: 1,
+                        colName: "CustomerID",
+                        message: "Can not be empty"
+                    }, {
+                        errorType: 'rowError',
+                        tabId: "detailsTab",
+                        gridId: "gwGrid1",
+                        rowId: 2,
+                        message: "Row Error"
+                    }, {
+                        errorType: 'cellError',
+                        tabId: "detailsTab",
+                        gridId: "gwGrid1",
+                        rowId: 3,
                         colName: "CustomerID",
                         message: "Can not be empty"
                     });
@@ -47,8 +62,11 @@
                 }
                 this.gwErrorCtrl.handleErrors(errors);
             };
+            this.print = function () {
+                console.log("print");
+            };
             this.addRow1 = function () {
-                this.grid1.addRow({
+                this.grid1.addRowToSelectedGrid({
                     OrderID: '21',
                     CustomerID: "HANAR21",
                     OrderDate: "1996-07-08",
@@ -57,7 +75,16 @@
                 });
             };
             this.addRow2 = function () {
-                this.grid2.addRow();
+                this.grid2.addRowToSelectedGrid({
+                    OrderID: '21',
+                    CustomerID: "HANAR21",
+                    OrderDate: "1996-07-08",
+                    Freight: 65.8300,
+                    ShipName: 'Hanari Carnes'
+                });
+            };
+            this.dupRow2 = function () {
+                this.grid2.dupRowToSelectedGrid();
             };
             this.addInvoice = function () {
                 dialogScope = $scope.$new();

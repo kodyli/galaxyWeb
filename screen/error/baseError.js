@@ -1,14 +1,13 @@
 (function (angular) {
 
-    function Error(data, errorHandler, context) {
+    function Error(data, errorHandler) {
+        this.contentCtrl = data.contentCtrl;
         this.tabId = data.tabId;
         this.message = data.message || "Unknown Error";
         this._errorHandler = errorHandler || angular.noop;
-        this._context = context;
     }
     Error.prototype = angular.extend(Object.create(Error.prototype), {
         contructor: Error,
-        display: angular.noop,
         toHtml: function () {
             var self = this;
             var a = $("<a>").attr("href", "#")
@@ -17,13 +16,10 @@
                 })
                 .text(self.message)
                 .click(function (e) {
-                    self.handle();
+                    self._errorHandler.handle(self);
                     e.preventDefault();
                 });
             return $("<li>").append(a);
-        },
-        handle: function () {
-            this._errorHandler.call(this._context, this);
         }
     });
 
@@ -33,8 +29,8 @@
 
     function gwBaseErrorFactor() {
         return {
-            create: function (data, errorHandler, context) {
-                return new Error(data, errorHandler, context);
+            create: function (data, errorHandler) {
+                return new Error(data, errorHandler);
             }
         };
     }

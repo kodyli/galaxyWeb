@@ -9,22 +9,41 @@ var nullGridController = {
              * Import functions from jqGrid, must be stateless.
              */
             return {
+                loadData: loadData,
                 addRowToBottom: addRowToBottom,
                 selectRowById: selectRowById,
                 unselectRow: unselectRow,
                 getRowIds: getRowIds,
                 selectCell: selectCell,
+                saveCellByIndex: saveCellByIndex,
                 expandSubGridByRowId: expandSubGridRow,
                 collapseSubGridByRowId: collapseSubGridRow,
-
+                getRowData: getRowData
             };
+
+            function getRowData(gridEle, rowId) {
+                return gridEle.getRowData(rowId);
+            }
+
+            function loadData(gridEle, data) {
+                gridEle.clearGridData(true);
+                gridEle.setGridParam({
+                    data: data
+                });
+                gridEle.trigger("reloadGrid");
+            }
+
+            function addRows(gridEle, rowsData) {
+
+            }
 
             function addRowToBottom(gridEle, rowId, rowData) {
                 return gridEle.addRowData(rowId, rowData, "last");
             }
 
             function selectRowById(gridEle, rowId) {
-                gridEle.setSelection(rowId);
+                //the sceond paramter must be true, otherwise it does not trigger the onSelectRow event.
+                gridEle.setSelection(rowId, true);
             }
 
             function unselectRow(gridEle) {
@@ -39,7 +58,10 @@ var nullGridController = {
                 var iRow = _getRowIndex(gridEle, rowId);
                 var iCol = _getColumnIndex(gridEle, colName);
                 gridEle.editCell(iRow, iCol, true);
-                gridEle.setCell(rowId, colName, '', 'test');
+            }
+
+            function saveCellByIndex(gridEle, iRow, iCol) {
+                gridEle.saveCell(iRow, iCol);
             }
 
             function expandSubGridRow(gridEle, parentRowId) {
@@ -67,38 +89,91 @@ var nullGridController = {
                 return index;
             }
         })
-        .directive("gwGrid", ["$compile", "gwGridService", function ($compile, gwGridService) {
+        .directive("gwGrid", ["$compile", "gwGridService", "jqgridData", function ($compile, gwGridService, jqgridData) {
+            /**
+             * Refactor GwGridController constructor function using Proxy Design Patter to
+             * seperate grid function from angular, so we can change framework easily,
+             * and also hide the details of grid.
+             * Stratege Design Patter
+             * define addRow(), dupRow() and print() function as a strategy, so we can easily
+             * change them or modify them.
+             */
             function GwGridController($scope) {
+                this._scope = $scope;
                 this.gridElement = null;
                 this.id = $scope.id;
+                this.root = this;
                 this.parent = null;
                 this.parentRowId = null;
                 this.childGrids = [];
                 this.isExpanded = false;
                 this.contentCtrl = nullContentController;
-                this._currentSelectedRowId = null;
-                this._currentSelectedGrid = null; //only avaliable for top grid;
+                this.currentSelectedRowId = null; //only avaliable for root grid;
+                this.currentSelectedGrid = null; //only avaliable for root grid;
+                this._dirty = false;
             }
-            angular.extend(GwGridController.prototype, {
-                init: function () {
-                    console.log("init");
+            angular.extend(GwGridController.prototype, editable, {
+                find: function (searchCriteria) {
+                    this.loadData(jqgridData);
+                },
+                loadData: function (data) {
+                    gwGridService.loadData(this.gridElement, data);
+                },
+                setDirty: function () {
+                    var self = this;
+                    if (!self._dirty) {
+                        self._scope.$applyAsync(function () {
+                            self._dirty = true;
+                        });
+                    }
+                },
+                isDirty: function () {
+                    return this._dirty;
+                },
+                resize: function () {
+                    console.log("resize");
+                },
+                addRowToSelectedGrid: function (rowData) {
+                    if (this.isSubgrid()) {
+                        throw "addRowToSelectedGrid() method does not work for subgrid";
+                    }
+                    var selectedGrid = this.root.currentSelectedGrid || this;
+                    selectedGrid.addRow(rowData);
                 },
                 addRow: function (rowData) {
-                    var selectedGrid = this._currentSelectedGrid ? this._currentSelectedGrid : this;
-                    if (selectedGrid.isSubgrid() && !selectedGrid.isExpanded) {
-                        selectedGrid.expand();
+                    if (this.isSubgrid() && !this.isExpanded) {
+                        this.expand();
                     }
-                    var rowId = selectedGrid._getLastRowId() + 1;
-                    var result = gwGridService.addRowToBottom(selectedGrid.gridElement, rowId, rowData);
+                    var rowId = this._getLastRowId() + 1;
+                    var result = gwGridService.addRowToBottom(this.gridElement, rowId, rowData);
                     if (result) {
-                        gwGridService.selectRowById(selectedGrid.gridElement, rowId);
+                        this.selectRow(rowId);
                         this._applyNewRowStyle(rowId);
                     }
+                },
+                dupRowToSelectedGrid: function () {
+                    if (this.isSubgrid()) {
+                        throw "addRowToSelectedGrid() method does not work for subgrid";
+                    }
+                    var selectedGrid = this.root.currentSelectedGrid || this;
+                    selectedGrid.dupRow(this.root.currentSelectedRowId);
+                },
+                dupRow: function (rowId) {
+                    var fromRowData = gwGridService.getRowData(this.gridElement, rowId);
+                    this.addRow(fromRowData);
+                },
+                selectRow: function (rowId) {
+                    gwGridService.selectRowById(this.gridElement, rowId);
                 },
                 selectCell: function (rowId, colName) {
                     gwGridService.selectCell(this.gridElement, rowId, colName);
                 },
+                saveCellByIndex: function (iRow, iCol) {
+                    gwGridService.saveCellByIndex(this.gridElement, iRow, iCol);
+                },
                 attach: function (childGrid, parentRowId) {
+                    childGrid.root = this.root;
+                    childGrid.root.currentSelectedGrid = childGrid;
                     childGrid.parent = this;
                     childGrid.parentRowId = parentRowId;
                     childGrid.isExpanded = true;
@@ -120,10 +195,15 @@ var nullGridController = {
                     return this.parent !== null;
                 },
                 expand: function (isOnClick) {
+                    /**
+                     * Chain of Responsibility Design Pattern
+                     */
                     if (this.isSubgrid() && !this.isExpanded) {
                         this.isExpanded = true;
                         if (!isOnClick) {
                             this.parent.expandSubGridByRowId(this.parentRowId);
+                        } else {
+                            this.root.currentSelectedGrid = this;
                         }
                     }
                 },
@@ -147,15 +227,29 @@ var nullGridController = {
                 collapseSubGridByRowId: function (rowId) {
                     gwGridService.collapseSubGridByRowId(this.gridElement, rowId);
                 },
-                unselectRow: function () {
-                    var currentGrid = this;
-                    while (currentGrid.parent) {
-                        currentGrid = currentGrid.parent;
+                setSelectedRowId: function (rowId) {
+                    if (this.root.currentSelectedGrid) {
+                        /**
+                         * if select the same row more than once, ingnor the rest selection.
+                         * otherwise, saveCell() method will not work, because resetSelection() method
+                         * will empty savedRow whitch is important for saveCell() method to work correctly.
+                         */
+                        if (this.root.currentSelectedGrid !== this || this.root.currentSelectedRowId !== rowId) {
+                            gwGridService.unselectRow(this.root.currentSelectedGrid.gridElement);
+                            this.root.currentSelectedGrid = this;
+                            this.root.currentSelectedRowId = rowId;
+                        }
+                    } else {
+                        var self = this;
+                        this._scope.$applyAsync(function () {
+                            //force view to update
+                            self.root.currentSelectedGrid = self;
+                            self.root.currentSelectedRowId = rowId;
+                        });
                     }
-                    if (currentGrid._currentSelectedGrid) {
-                        gwGridService.unselectRow(currentGrid._currentSelectedGrid.gridElement);
-                    }
-                    currentGrid._currentSelectedGrid = currentGrid === this ? null : this;
+                },
+                hasSelectedRow: function () {
+                    return this.root.currentSelectedRowId !== null;
                 },
                 _getLastRowId: function () {
                     var rowIds = gwGridService.getRowIds(this.gridElement);
@@ -199,7 +293,7 @@ var nullGridController = {
                                 gwContentCtrl = ctrls[2] || nullContentController;
                             scope.parent = scope.parent || nullGridController;
                             gwTabCtrl.activate(function () {
-                                gwGridCtrl.init();
+                                gwGridCtrl.resize();
                             });
                             gwContentCtrl.attachGridController(gwGridCtrl);
                             scope.name = gwGridCtrl;
@@ -212,11 +306,11 @@ var nullGridController = {
                                 return subgridContainerId.replace("_table", "") + "_subgrid";
                             }
                             iEle.ready(function () {
+                                var oldCellValue = null;
                                 gwGridCtrl.gridElement = iEle.children("table").filter(":first").jqGrid({
-                                    url: 'http://trirand.com/blog/phpjqgrid/examples/jsonp/getjsonp.php?callback=?&qwery=longorders',
-                                    mtype: "GET",
-                                    datatype: "jsonp",
+                                    datatype: "local",
                                     cellEdit: true,
+                                    cellsubmit: "clientArray",
                                     colModel: [
                                         {
                                             label: 'OrderID',
@@ -252,9 +346,46 @@ var nullGridController = {
                                             width: 150
                     }
                 ],
-                                    viewrecords: true,
                                     scrollrows: true,
                                     height: 400,
+                                    beforeSelectRow: function (rowId, e) {
+                                        //This event fire when the user CLICK on the row, but before select them. 
+                                        gwGridCtrl.setSelectedRowId(rowId);
+                                        return true;
+                                    },
+                                    onSelectRow: function (rowId, e) {
+                                        //Raised immediately after row was clicked by setSelection(rowId,true)
+                                        gwGridCtrl.setSelectedRowId(rowId);
+                                    },
+                                    afterInsertRow: function () {
+                                        gwGridCtrl.setDirty();
+                                    },
+                                    formatCell: function () {
+                                        //console.log(1);
+                                    },
+                                    beforeEditCell: function (rowid, cellname, oldValue) {
+                                        //console.log(2);
+                                        //oldCellValue = oldValue;
+                                    },
+                                    afterEditCell: function (rowid, cellname, value, iRow, iCol) {
+                                        //console.log(3);
+                                        var input = $(this).find(">tbody>tr.jqgrow>td>#" + rowid + "_" + cellname);
+                                        input.one("input", function () {
+                                            gwGridCtrl.setDirty();
+                                        });
+                                        input.one("blur", function () {
+                                            gwGridCtrl.saveCellByIndex(iRow, iCol);
+                                        });
+                                    },
+                                    beforeSaveCell: function () {
+                                        //console.log(4);
+                                    },
+                                    beforeSubmitCell: function () {
+                                        //console.log(5);
+                                    },
+                                    afterSaveCell: function () {
+                                        //console.log(6);
+                                    },
                                     subGrid: true,
                                     subGridOptions: {
                                         reloadOnExpand: false
@@ -277,11 +408,6 @@ var nullGridController = {
                                         var subgrid = gwGridCtrl.getSubgrid(subgridId);
                                         subgrid.collapse(true);
                                     },
-                                    beforeSelectRow: function (rowId, e) {
-                                        gwGridCtrl.unselectRow();
-                                        gwGridCtrl._currentSelectedRowId = rowId;
-                                        return true;
-                                    }
                                 });
                             });
                         }

@@ -1,5 +1,9 @@
 (function (angular, $) {
-
+    /**
+     * Composite Design Pattern
+     * When we try to collapse all the child nodes of a folder node, we do not have
+     * to check the node type before we call the collapse() method of each node.
+     */
     function menuFactory(GwNodeType) {
         function ANode(data, parentNode) {
             this.id = data.id;

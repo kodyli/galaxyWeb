@@ -1,20 +1,17 @@
 (function (angular) {
     function fieldErrorFactor(GwError) {
-        function FieldError(data, errorHandler, context) {
+        function FieldError(data, errorHandler) {
             GwError.apply(this, arguments);
             this.ngModel = data.ngModel;
         }
 
         FieldError.prototype = GwError.createSubClass({
             contructor: FieldError,
-            display: function (gwContentCtrl) {
-                gwContentCtrl.element.find("[ng-model$='" + this.ngModel + "']").filter(":first").select();
-            }
         });
 
         return {
-            create: function (data, errorHandler, context) {
-                return new FieldError(data, errorHandler, context);
+            create: function (data, errorHandler) {
+                return new FieldError(data, errorHandler);
             }
         };
     }
