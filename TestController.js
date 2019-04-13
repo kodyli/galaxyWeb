@@ -94,7 +94,11 @@
                     title: "Add an Invoice",
                     width: $(window).width() * 0.8,
                     height: $(window).height() * 0.7,
-                    modal: true,
+                    buttons: {
+                        OK: function () {
+                            $(this).dialog("close");
+                        }
+                    }
                 });
             };
             this.closDialog = function () {
